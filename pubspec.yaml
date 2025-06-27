@@ -49,6 +49,10 @@ dependencies:
   uuid: ^4.2.1            # 生成唯一ID
   intl: ^0.18.1           # 日期格式化
   shared_preferences: ^2.2.2  # 简单存储
+  # 语音和AI功能
+  speech_to_text: ^7.0.0  # 改为 7.0.0 或更高版本
+  http: ^1.1.0
+  permission_handler: ^11.0.1
 
 dev_dependencies:
   flutter_test:

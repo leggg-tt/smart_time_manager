@@ -5,6 +5,8 @@ import '../models/task.dart';
 import '../models/enums.dart';
 import '../widgets/task_list_item.dart';
 import '../widgets/add_task_dialog.dart';
+import '../widgets/voice_input_dialog.dart';
+import '../services/scheduler_service.dart';
 
 class TaskListScreen extends StatefulWidget {
   const TaskListScreen({super.key});  // 添加 const 构造函数
@@ -64,10 +66,26 @@ class _TaskListScreenState extends State<TaskListScreen>
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddTaskDialog(context),
-        child: const Icon(Icons.add),
-        tooltip: '添加任务',
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          // 语音输入按钮
+          FloatingActionButton.small(
+            onPressed: () => _showVoiceInputDialog(context),
+            heroTag: 'voice',
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+            child: const Icon(Icons.mic, size: 20),
+            tooltip: '语音创建任务',
+          ),
+          const SizedBox(height: 12),
+          // 普通添加按钮
+          FloatingActionButton(
+            onPressed: () => _showAddTaskDialog(context),
+            heroTag: 'add',
+            child: const Icon(Icons.add),
+            tooltip: '添加任务',
+          ),
+        ],
       ),
     );
   }
@@ -244,6 +262,13 @@ class _TaskListScreenState extends State<TaskListScreen>
     );
   }
 
+  void _showVoiceInputDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const VoiceInputDialog(),
+    );
+  }
+
   void _handleTaskTap(BuildContext context, Task task) {
     if (task.status == TaskStatus.pending) {
       _scheduleTask(context, task);
@@ -292,20 +317,50 @@ class _TaskListScreenState extends State<TaskListScreen>
 }
 
 // 临时的任务安排对话框
-class _ScheduleTaskDialog extends StatelessWidget {
+class _ScheduleTaskDialog extends StatefulWidget {
   final Task task;
 
   const _ScheduleTaskDialog({required this.task});
 
   @override
+  _ScheduleTaskDialogState createState() => _ScheduleTaskDialogState();
+}
+
+class _ScheduleTaskDialogState extends State<_ScheduleTaskDialog> {
+  DateTime _selectedDate = DateTime.now();
+
+  @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('安排任务: ${task.title}'),
+      title: Text('安排任务: ${widget.task.title}'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('任务时长: ${task.durationDisplay}'),
+          Text('任务时长: ${widget.task.durationDisplay}'),
           const SizedBox(height: 16),
+
+          // 日期选择
+          ListTile(
+            leading: const Icon(Icons.calendar_today),
+            title: const Text('选择日期'),
+            subtitle: Text(
+              '${_selectedDate.year}年${_selectedDate.month}月${_selectedDate.day}日',
+            ),
+            onTap: () async {
+              final date = await showDatePicker(
+                context: context,
+                initialDate: _selectedDate,
+                firstDate: DateTime.now(),
+                lastDate: widget.task.deadline ??
+                    DateTime.now().add(const Duration(days: 365)),
+              );
+              if (date != null) {
+                setState(() => _selectedDate = date);
+              }
+            },
+          ),
+          const SizedBox(height: 16),
+
           ElevatedButton(
             onPressed: () async {
               Navigator.of(context).pop();
@@ -313,18 +368,28 @@ class _ScheduleTaskDialog extends StatelessWidget {
               // 获取推荐时间
               final provider = context.read<TaskProvider>();
               final slots = await provider.getRecommendedSlots(
-                task,
-                DateTime.now(),
+                widget.task,
+                _selectedDate,  // 使用选择的日期
               );
 
               if (slots.isNotEmpty) {
-                // 自动选择第一个推荐时间
-                await provider.scheduleTask(task, slots.first.startTime);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      '已将任务安排到 ${_formatTime(slots.first.startTime)}',
-                    ),
+                // 显示推荐时间选择对话框
+                showDialog(
+                  context: context,
+                  builder: (context) => _TimeSlotSelectionDialog(
+                    task: widget.task,
+                    slots: slots,
+                    onSelect: (slot) async {
+                      await provider.scheduleTask(widget.task, slot.startTime);
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            '已将任务安排到 ${_formatTime(slot.startTime)}',
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 );
               } else {
@@ -350,5 +415,64 @@ class _ScheduleTaskDialog extends StatelessWidget {
     return '${time.month}月${time.day}日 '
         '${time.hour.toString().padLeft(2, '0')}:'
         '${time.minute.toString().padLeft(2, '0')}';
+  }
+}
+
+// 时间段选择对话框
+class _TimeSlotSelectionDialog extends StatelessWidget {
+  final Task task;
+  final List<TimeSlot> slots;
+  final Function(TimeSlot) onSelect;
+
+  const _TimeSlotSelectionDialog({
+    required this.task,
+    required this.slots,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('选择时间段'),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: ListView.builder(
+          shrinkWrap: true,
+          itemCount: slots.length,
+          itemBuilder: (context, index) {
+            final slot = slots[index];
+            return Card(
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  child: Text('${slot.score.toInt()}'),
+                ),
+                title: Text(
+                  '${slot.startTime.hour.toString().padLeft(2, '0')}:'
+                      '${slot.startTime.minute.toString().padLeft(2, '0')} - '
+                      '${slot.endTime.hour.toString().padLeft(2, '0')}:'
+                      '${slot.endTime.minute.toString().padLeft(2, '0')}',
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (slot.timeBlock != null)
+                      Text('时间块: ${slot.timeBlock!.name}'),
+                    ...slot.reasons.map((reason) => Text('• $reason')),
+                  ],
+                ),
+                onTap: () => onSelect(slot),
+              ),
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('取消'),
+        ),
+      ],
+    );
   }
 }

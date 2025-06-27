@@ -30,6 +30,8 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
   TaskCategory _taskCategory = TaskCategory.routine;
   DateTime? _deadline;
   bool _scheduleImmediately = false;
+  int _scheduleOption = 0; // 0: 不安排, 1: 指定日期
+  DateTime? _scheduledDate;
 
   @override
   void dispose() {
@@ -263,16 +265,55 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                     ),
                   ),
 
-                  // 立即安排
-                  CheckboxListTile(
+                  // 任务安排选项
+                  const SizedBox(height: 16),
+                  Text(
+                    '任务安排',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  RadioListTile<int>(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('立即智能安排'),
-                    subtitle: const Text('创建后自动推荐时间段'),
-                    value: _scheduleImmediately,
+                    title: const Text('暂不安排'),
+                    subtitle: const Text('稍后手动安排时间'),
+                    value: 0,
+                    groupValue: _scheduleOption,
                     onChanged: (value) {
-                      setState(() => _scheduleImmediately = value ?? false);
+                      setState(() {
+                        _scheduleOption = value!;
+                        _scheduleImmediately = false;
+                      });
                     },
                   ),
+                  RadioListTile<int>(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('指定日期'),
+                    subtitle: Text(_scheduledDate == null
+                        ? '选择要安排的日期'
+                        : '${_scheduledDate!.year}年${_scheduledDate!.month}月${_scheduledDate!.day}日'),
+                    value: 1,
+                    groupValue: _scheduleOption,
+                    onChanged: (value) async {
+                      setState(() => _scheduleOption = value!);
+                      if (value == 1) {
+                        await _selectScheduledDate();
+                      }
+                    },
+                    secondary: IconButton(
+                      icon: const Icon(Icons.calendar_today),
+                      onPressed: _scheduleOption == 1 ? _selectScheduledDate : null,
+                    ),
+                  ),
+                  if (_scheduleOption == 1 && _scheduledDate != null)
+                    CheckboxListTile(
+                      contentPadding: const EdgeInsets.only(left: 56),
+                      title: const Text('智能推荐时间'),
+                      subtitle: const Text('在选定日期自动推荐最佳时间段'),
+                      value: _scheduleImmediately,
+                      onChanged: (value) {
+                        setState(() => _scheduleImmediately = value ?? false);
+                      },
+                    ),
                   const SizedBox(height: 24),
 
                   // 操作按钮
@@ -326,6 +367,19 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     }
   }
 
+  Future<void> _selectScheduledDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _scheduledDate ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: _deadline ?? DateTime.now().add(const Duration(days: 365)),
+    );
+
+    if (date != null) {
+      setState(() => _scheduledDate = date);
+    }
+  }
+
   Future<void> _submitTask() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -351,18 +405,29 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('任务"${task.title}"已创建'),
-          action: _scheduleImmediately
+          action: _scheduleImmediately && _scheduledDate != null
               ? SnackBarAction(
             label: '查看推荐',
             onPressed: () async {
-              // TODO: 显示推荐时间段
+              // 获取指定日期的推荐时间
               final slots = await provider.getRecommendedSlots(
                 task,
-                widget.initialDate ?? DateTime.now(),
+                _scheduledDate!,
               );
               if (slots.isNotEmpty) {
-                // 显示推荐结果
-                print('推荐时间: ${slots.first.startTime}');
+                // 自动选择第一个推荐时间
+                await provider.scheduleTask(task, slots.first.startTime);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      '已将任务安排到 ${_formatTime(slots.first.startTime)}',
+                    ),
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('没有找到合适的时间段')),
+                );
               }
             },
           )
@@ -377,5 +442,11 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
         ),
       );
     }
+  }
+
+  String _formatTime(DateTime time) {
+    return '${time.month}月${time.day}日 '
+        '${time.hour.toString().padLeft(2, '0')}:'
+        '${time.minute.toString().padLeft(2, '0')}';
   }
 }

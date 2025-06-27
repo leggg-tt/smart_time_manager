@@ -9,6 +9,7 @@ import '../models/user_time_block.dart';
 import '../widgets/task_card.dart';
 import '../widgets/add_task_dialog.dart';
 import '../widgets/time_analysis_card.dart';
+import '../widgets/voice_input_dialog.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});  // 添加 const 构造函数
@@ -126,10 +127,26 @@ class _CalendarScreenState extends State<CalendarScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddTaskDialog(context),
-        child: const Icon(Icons.add),
-        tooltip: '添加任务',
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          // 语音输入按钮
+          FloatingActionButton(
+            onPressed: () => _showVoiceInputDialog(context),
+            heroTag: 'voice',
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+            child: const Icon(Icons.mic),
+            tooltip: '语音创建任务',
+          ),
+          const SizedBox(height: 16),
+          // 普通添加按钮
+          FloatingActionButton(
+            onPressed: () => _showAddTaskDialog(context),
+            heroTag: 'add',
+            child: const Icon(Icons.add),
+            tooltip: '添加任务',
+          ),
+        ],
       ),
     );
   }
@@ -362,6 +379,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
       builder: (context) => AddTaskDialog(
         initialDate: _selectedDay.value,
       ),
+    );
+  }
+
+  void _showVoiceInputDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const VoiceInputDialog(),
     );
   }
 
