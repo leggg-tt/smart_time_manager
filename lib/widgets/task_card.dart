@@ -38,7 +38,7 @@ class TaskCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // 完成状态复选框
+              // Completion status checkbox
               if (onStatusChanged != null)
                 Checkbox(
                   value: isCompleted,
@@ -52,12 +52,12 @@ class TaskCard extends StatelessWidget {
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
 
-              // 任务内容
+              // Task content
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 标题行
+                    // Title row
                     Row(
                       children: [
                         Expanded(
@@ -76,7 +76,7 @@ class TaskCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        // 任务类型图标
+                        // Task category icon
                         Text(
                           task.taskCategory.icon,
                           style: const TextStyle(fontSize: 16),
@@ -85,12 +85,12 @@ class TaskCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
 
-                    // 属性标签行
+                    // Property tags row
                     Wrap(
                       spacing: 4,
                       runSpacing: 4,
                       children: [
-                        // 时长标签
+                        // Duration tag
                         _buildChip(
                           context,
                           Icons.schedule,
@@ -98,7 +98,7 @@ class TaskCard extends StatelessWidget {
                           Colors.blue,
                         ),
 
-                        // 能量需求标签
+                        // Energy requirement tag
                         _buildChip(
                           context,
                           Icons.battery_full,
@@ -106,7 +106,7 @@ class TaskCard extends StatelessWidget {
                           _getEnergyColor(task.energyRequired),
                         ),
 
-                        // 专注度标签
+                        // Focus requirement tag
                         _buildChip(
                           context,
                           Icons.center_focus_strong,
@@ -114,7 +114,7 @@ class TaskCard extends StatelessWidget {
                           _getFocusColor(task.focusRequired),
                         ),
 
-                        // 截止时间标签（如果有）
+                        // Deadline tag (if exists)
                         if (task.deadline != null && !isCompleted)
                           _buildChip(
                             context,
@@ -205,15 +205,15 @@ class TaskCard extends StatelessWidget {
     final difference = deadline.difference(now);
 
     if (difference.isNegative) {
-      return '已过期';
+      return 'Overdue';                              // 原来是 '已过期'
     } else if (difference.inDays == 0) {
-      return '今天';
+      return 'Today';                                // 原来是 '今天'
     } else if (difference.inDays == 1) {
-      return '明天';
+      return 'Tomorrow';                             // 原来是 '明天'
     } else if (difference.inDays <= 7) {
-      return '${difference.inDays}天后';
+      return 'In ${difference.inDays} days';         // 原来是 '${difference.inDays}天后'
     } else {
-      return '${deadline.month}月${deadline.day}日';
+      return '${deadline.month}/${deadline.day}';    // 原来是 '${deadline.month}月${deadline.day}日'
     }
   }
 }

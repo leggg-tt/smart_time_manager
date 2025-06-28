@@ -136,7 +136,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             heroTag: 'voice',
             backgroundColor: Theme.of(context).colorScheme.secondary,
             child: const Icon(Icons.mic),
-            tooltip: '语音创建任务',
+            tooltip: 'Voice input',  // 原来是 '语音创建任务'
           ),
           const SizedBox(height: 16),
           // 普通添加按钮
@@ -144,7 +144,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             onPressed: () => _showAddTaskDialog(context),
             heroTag: 'add',
             child: const Icon(Icons.add),
-            tooltip: '添加任务',
+            tooltip: 'Add task',  // 原来是 '添加任务'
           ),
         ],
       ),
@@ -157,7 +157,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       List<Task> tasks,
       List<UserTimeBlock> timeBlocks,
       ) {
-    final dateFormat = DateFormat('MM月dd日 EEEE', 'zh_CN');
+    final dateFormat = DateFormat('MMM dd, EEEE', 'en_US');  // 改为英文格式
 
     return Column(
       children: [
@@ -177,7 +177,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ),
               const Spacer(),
               Text(
-                '${tasks.length} 个任务',
+                '${tasks.length} tasks',  // 原来是 '${tasks.length} 个任务'
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
@@ -206,14 +206,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            '这一天还没有安排任务',
+            'No tasks scheduled for this day',  // 原来是 '这一天还没有安排任务'
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            '点击右下角按钮添加任务',
+            'Tap the button below to add a task',  // 原来是 '点击右下角按钮添加任务'
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
             ),
@@ -243,14 +243,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
         }).toList();
 
         // 查找这个小时的时间块
-        final hourTimeBlock = timeBlocks.firstWhere(
+        final hourTimeBlock = timeBlocks.isNotEmpty
+            ? timeBlocks.firstWhere(
               (block) {
             final startHour = int.parse(block.startTime.split(':')[0]);
             final endHour = int.parse(block.endTime.split(':')[0]);
             return hour >= startHour && hour < endHour;
           },
           orElse: () => timeBlocks.first,
-        );
+        )
+            : null;
 
         return _buildHourRow(
           context,
@@ -410,10 +412,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   void _showTaskDetails(BuildContext context, Task task) {
-    // TODO: 实现任务详情页面
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('任务详情: ${task.title}'),
+        content: Text('Task details: ${task.title}'),  // 原来是 '任务详情: ${task.title}'
       ),
     );
   }

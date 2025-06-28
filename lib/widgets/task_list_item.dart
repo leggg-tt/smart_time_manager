@@ -30,10 +30,10 @@ class TaskListItem extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 标题和操作按钮
+              // Title and action buttons
               Row(
                 children: [
-                  // 优先级指示器
+                  // Priority indicator
                   Container(
                     width: 4,
                     height: 40,
@@ -44,7 +44,7 @@ class TaskListItem extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
 
-                  // 任务信息
+                  // Task information
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,25 +68,25 @@ class TaskListItem extends StatelessWidget {
                     ),
                   ),
 
-                  // 操作按钮
+                  // Action buttons
                   if (onSchedule != null)
                     IconButton(
                       icon: const Icon(Icons.schedule),
                       onPressed: onSchedule,
-                      tooltip: '安排时间',
+                      tooltip: 'Schedule time',             // 原来是 '安排时间'
                     ),
                   if (onDelete != null)
                     IconButton(
                       icon: const Icon(Icons.delete_outline),
                       onPressed: onDelete,
-                      tooltip: '删除',
+                      tooltip: 'Delete',                    // 原来是 '删除'
                     ),
                 ],
               ),
 
               const SizedBox(height: 8),
 
-              // 任务属性
+              // Task properties
               Wrap(
                 spacing: 8,
                 runSpacing: 4,
@@ -106,13 +106,13 @@ class TaskListItem extends StatelessWidget {
                   _buildPropertyChip(
                     context,
                     Icons.flash_on,
-                    '精力: ${task.energyRequired.displayName}',
+                    'Energy: ${task.energyRequired.displayName}', // 原来是 '精力: ${task.energyRequired.displayName}'
                     _getEnergyColor(task.energyRequired),
                   ),
                   _buildPropertyChip(
                     context,
                     Icons.psychology,
-                    '专注: ${task.focusRequired.displayName}',
+                    'Focus: ${task.focusRequired.displayName}',   // 原来是 '专注: ${task.focusRequired.displayName}'
                     Colors.indigo,
                   ),
                   if (task.deadline != null)
@@ -202,13 +202,13 @@ class TaskListItem extends StatelessWidget {
     final difference = deadline.difference(now);
 
     if (difference.isNegative) {
-      return '已过期';
+      return 'Overdue';                              // 原来是 '已过期'
     } else if (difference.inDays == 0) {
-      return '今天截止';
+      return 'Due today';                            // 原来是 '今天截止'
     } else if (difference.inDays == 1) {
-      return '明天截止';
+      return 'Due tomorrow';                         // 原来是 '明天截止'
     } else {
-      return '${deadline.month}/${deadline.day} 截止';
+      return 'Due ${deadline.month}/${deadline.day}'; // 原来是 '${deadline.month}/${deadline.day} 截止'
     }
   }
 

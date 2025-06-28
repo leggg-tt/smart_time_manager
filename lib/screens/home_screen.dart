@@ -23,10 +23,10 @@ class _HomeScreenState extends State<HomeScreen> {
     const SettingsScreen(),
   ];
 
-  final List<String> _titles = const [  // 添加 const
-    '日历视图',
-    '任务列表',
-    '设置',
+  final List<String> _titles = const [
+    'Calendar View',  // 原来是 '日历视图'
+    'Task List',      // 原来是 '任务列表'
+    'Settings',       // 原来是 '设置'
   ];
 
   @override
@@ -61,17 +61,17 @@ class _HomeScreenState extends State<HomeScreen> {
           NavigationDestination(
             icon: Icon(Icons.calendar_today),
             selectedIcon: Icon(Icons.calendar_today, color: Colors.blue),
-            label: '日历',
+            label: 'Calendar',  // 原来是 '日历'
           ),
           NavigationDestination(
             icon: Icon(Icons.list),
             selectedIcon: Icon(Icons.list, color: Colors.blue),
-            label: '任务',
+            label: 'Tasks',     // 原来是 '任务'
           ),
           NavigationDestination(
             icon: Icon(Icons.settings),
             selectedIcon: Icon(Icons.settings, color: Colors.blue),
-            label: '设置',
+            label: 'Settings',  // 原来是 '设置'
           ),
         ],
       ),

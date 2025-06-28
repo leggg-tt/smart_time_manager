@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/date_symbol_data_local.dart';  // 添加这个导入
+import 'package:intl/date_symbol_data_local.dart';
 import 'providers/task_provider.dart';
 import 'providers/time_block_provider.dart';
 import 'screens/home_screen.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();  // 添加这一行
-  await initializeDateFormatting('zh_CN', null);  // 初始化中文日期格式
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('en_US', null);  // 改为英文
   runApp(const MyApp());
 }
 
@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TimeBlockProvider()),
       ],
       child: MaterialApp(
-        title: '智能时间管理',
+        title: 'Smart Time Manager',  // 改为英文
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
             seedColor: Colors.blue,

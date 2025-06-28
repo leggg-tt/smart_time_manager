@@ -36,16 +36,16 @@ enum TaskCategory {
   communication  // 沟通协作
 }
 
-// 扩展方法：获取中文显示名称
+// 扩展方法：获取英文显示名称
 extension PriorityExtension on Priority {
   String get displayName {
     switch (this) {
       case Priority.low:
-        return '低';
+        return 'Low';
       case Priority.medium:
-        return '中';
+        return 'Medium';
       case Priority.high:
-        return '高';
+        return 'High';
     }
   }
 
@@ -65,13 +65,13 @@ extension TaskCategoryExtension on TaskCategory {
   String get displayName {
     switch (this) {
       case TaskCategory.creative:
-        return '创造性';
+        return 'Creative';
       case TaskCategory.analytical:
-        return '分析性';
+        return 'Analytical';
       case TaskCategory.routine:
-        return '事务性';
+        return 'Routine';
       case TaskCategory.communication:
-        return '沟通协作';
+        return 'Communication';
     }
   }
 
@@ -93,11 +93,11 @@ extension EnergyLevelExtension on EnergyLevel {
   String get displayName {
     switch (this) {
       case EnergyLevel.low:
-        return '低';
+        return 'Low';
       case EnergyLevel.medium:
-        return '中';
+        return 'Medium';
       case EnergyLevel.high:
-        return '高';
+        return 'High';
     }
   }
 
@@ -117,11 +117,11 @@ extension FocusLevelExtension on FocusLevel {
   String get displayName {
     switch (this) {
       case FocusLevel.light:
-        return '轻度';
+        return 'Light';
       case FocusLevel.medium:
-        return '中度';
+        return 'Medium';
       case FocusLevel.deep:
-        return '深度';
+        return 'Deep';
     }
   }
 

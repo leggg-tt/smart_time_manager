@@ -31,43 +31,43 @@ class TimeAnalysisCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  '时间分析',
+                  'Time Analysis',                        // 原来是 '时间分析'
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ],
             ),
             const SizedBox(height: 12),
 
-            // 统计信息
+            // Statistics information
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildStatItem(
                   context,
                   Icons.timer,
-                  '${totalFreeHours.toStringAsFixed(1)}小时',
-                  '空闲时间',
+                  '${totalFreeHours.toStringAsFixed(1)}h',  // 原来是 '${totalFreeHours.toStringAsFixed(1)}小时'
+                  'Free Time',                              // 原来是 '空闲时间'
                   Colors.blue,
                 ),
                 _buildStatItem(
                   context,
                   Icons.scatter_plot,
-                  '$freeBlockCount个',
-                  '时间块',
+                  '$freeBlockCount',                        // 原来是 '$freeBlockCount个'
+                  'Time Blocks',                            // 原来是 '时间块'
                   Colors.orange,
                 ),
                 _buildStatItem(
                   context,
                   Icons.broken_image,
-                  '$fragmentCount个',
-                  '碎片时间',
+                  '$fragmentCount',                         // 原来是 '$fragmentCount个'
+                  'Fragments',                              // 原来是 '碎片时间'
                   Colors.red,
                 ),
                 _buildStatItem(
                   context,
                   hasDeepWorkTime ? Icons.check_circle : Icons.cancel,
-                  hasDeepWorkTime ? '有' : '无',
-                  '深度时间',
+                  hasDeepWorkTime ? 'Yes' : 'No',           // 原来是 '有' : '无'
+                  'Deep Focus',                             // 原来是 '深度时间'
                   hasDeepWorkTime ? Colors.green : Colors.grey,
                 ),
               ],
@@ -107,6 +107,7 @@ class TimeAnalysisCard extends StatelessWidget {
       ),
     );
   }
+
   Widget _buildStatItem(
       BuildContext context,
       IconData icon,

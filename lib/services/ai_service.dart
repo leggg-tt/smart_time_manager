@@ -23,11 +23,11 @@ class AITaskParser {
     _apiKey = apiKey;
   }
 
-  // 解析语音输入并创建任务
+  // 解析语音输入并创建任务 - 支持英文
   Future<ParsedTaskData?> parseVoiceInput(String voiceText) async {
     final apiKey = await getApiKey();
     if (apiKey == null || apiKey.isEmpty) {
-      throw Exception('请先设置 Claude API Key');
+      throw Exception('Please set Claude API Key first');
     }
 
     try {
@@ -45,32 +45,44 @@ class AITaskParser {
             {
               'role': 'user',
               'content': '''
-请将以下语音输入解析为结构化的任务数据。返回 JSON 格式，不要包含其他内容。
+Please parse the following voice input into structured task data. Return JSON format only, no other content.
 
-语音输入："$voiceText"
+Voice input: "$voiceText"
 
-当前时间：${DateTime.now().toIso8601String()}
+Current time: ${DateTime.now().toIso8601String()}
 
-请返回以下格式的 JSON：
+Please return JSON in this format:
 {
-  "title": "任务标题",
-  "description": "任务描述（可选）",
+  "title": "Task title",
+  "description": "Task description (optional)",
   "durationMinutes": 60,
   "priority": "high/medium/low",
   "energyRequired": "high/medium/low", 
   "focusRequired": "deep/medium/light",
   "taskCategory": "creative/analytical/routine/communication",
-  "deadline": "YYYY-MM-DD（可选）",
-  "suggestedDate": "YYYY-MM-DD（建议安排的日期）",
-  "suggestedTime": "HH:mm（建议安排的时间）"
+  "deadline": "YYYY-MM-DD (optional)",
+  "suggestedDate": "YYYY-MM-DD (suggested date to schedule)",
+  "suggestedTime": "HH:mm (suggested time to schedule)"
 }
 
-解析规则：
-1. 如果没有明确说明时长，根据任务类型推测合理时长
-2. 如果没有说明优先级，根据语气和截止时间判断
-3. 根据任务内容推断合适的类别、能量和专注度需求
-4. 如果提到"明天"、"后天"等相对时间，转换为具体日期
-5. 如果没有提到具体时间，根据任务类型推荐合适的时间段
+Parsing rules:
+1. If duration is not specified, estimate reasonable duration based on task type
+2. If priority is not mentioned, judge based on tone and deadline urgency
+3. Infer appropriate category, energy and focus requirements based on task content
+4. If relative time like "tomorrow", "next week", "this afternoon" is mentioned, convert to specific date
+5. If no specific time is mentioned, recommend suitable time slots based on task type
+6. For meetings/calls, default to medium-high energy and medium focus
+7. For creative work, suggest high energy and deep focus
+8. For routine tasks, suggest low-medium energy and light-medium focus
+
+Examples of voice input patterns:
+- "Schedule a meeting with John tomorrow at 3 PM for 2 hours"
+- "Finish the project report by Friday afternoon, it needs high focus"
+- "Call mom sometime this week"
+- "Prepare presentation for Monday morning meeting"
+- "Review emails and respond to urgent ones"
+- "Workout at the gym for an hour"
+- "Write blog post about AI trends, should take about 90 minutes"
 '''
             }
           ],
@@ -90,10 +102,10 @@ class AITaskParser {
         }
       }
 
-      throw Exception('API 请求失败: ${response.statusCode}');
+      throw Exception('API request failed: ${response.statusCode}');
     } catch (e) {
-      print('AI 解析错误: $e');
-      throw Exception('解析失败: $e');
+      print('AI parsing error: $e');
+      throw Exception('Parsing failed: $e');
     }
   }
 }
@@ -126,7 +138,7 @@ class ParsedTaskData {
 
   factory ParsedTaskData.fromJson(Map<String, dynamic> json) {
     return ParsedTaskData(
-      title: json['title'] ?? '未命名任务',
+      title: json['title'] ?? 'Untitled Task',
       description: json['description'],
       durationMinutes: json['durationMinutes'] ?? 60,
       priority: _parsePriority(json['priority']),

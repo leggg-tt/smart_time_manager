@@ -20,7 +20,15 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
   bool _isListening = false;
   bool _isProcessing = false;
   String _text = '';
-  String _statusMessage = '点击麦克风开始说话';
+  String _statusMessage = 'Tap microphone to start speaking';
+
+  // 语言选择
+  String _selectedLocale = 'en_US';
+  final Map<String, String> _localeNames = {
+    'en_US': 'English (US)',
+    'en_GB': 'English (UK)',
+    'cmn_CN': '中文',
+  };
 
   late AnimationController _animationController;
   late Animation<double> _animation;
@@ -47,7 +55,7 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
     if (status != PermissionStatus.granted) {
       if (mounted) {
         setState(() {
-          _statusMessage = '需要麦克风权限';
+          _statusMessage = 'Microphone permission required';
         });
       }
       return;
@@ -55,34 +63,34 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
 
     bool available = await _speech.initialize(
       onStatus: (status) {
-        print('语音状态: $status');
-        print('当前识别文本: $_text');  // 添加调试
-        if (mounted) {  // 添加 mounted 检查
+        print('Speech status: $status');
+        print('Current recognized text: $_text');
+        if (mounted) {
           if (status == 'done') {
-            print('状态为done，文本是否为空: ${_text.isEmpty}');  // 添加调试
+            print('Status is done, text empty: ${_text.isEmpty}');
             if (_text.isNotEmpty) {
-              print('准备处理语音输入...');  // 添加调试
+              print('Processing voice input...');
               _processVoiceInput();
             }
           }
         }
       },
       onError: (error) {
-        print('语音错误详情: ${error.errorMsg}, 是否永久错误: ${error.permanent}');
-        if (mounted) {  // 添加 mounted 检查
+        print('Speech error: ${error.errorMsg}, permanent: ${error.permanent}');
+        if (mounted) {
           setState(() {
             _isListening = false;
-            _statusMessage = '语音识别错误: ${error.errorMsg}';
+            _statusMessage = 'Speech recognition error: ${error.errorMsg}';
           });
           _animationController.stop();
         }
       },
-      debugLogging: true,  // 开启调试日志
+      debugLogging: true,
     );
 
-    if (!available && mounted) {  // 添加 mounted 检查
+    if (!available && mounted) {
       setState(() {
-        _statusMessage = '语音识别不可用';
+        _statusMessage = 'Speech recognition not available';
       });
     }
   }
@@ -93,48 +101,47 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
       if (available) {
         // 获取可用的语言
         var locales = await _speech.locales();
-        print('可用语言: ${locales.map((l) => l.localeId).toList()}');
+        print('Available languages: ${locales.map((l) => l.localeId).toList()}');
 
         if (mounted) {
           setState(() {
             _isListening = true;
             _text = '';
-            _statusMessage = '正在听...';
+            _statusMessage = 'Listening...';
           });
         }
         _animationController.repeat(reverse: true);
 
         await _speech.listen(
           onResult: (result) {
-            print('识别结果: ${result.recognizedWords}, 置信度: ${result.confidence}, 是否最终结果: ${result.finalResult}');
-            if (mounted) {  // 添加 mounted 检查
+            print('Recognition result: ${result.recognizedWords}, confidence: ${result.confidence}, final: ${result.finalResult}');
+            if (mounted) {
               setState(() {
                 _text = result.recognizedWords;
               });
             }
           },
-          localeId: 'cmn_CN', // 改回中文
+          localeId: _selectedLocale, // 使用选择的语言
           cancelOnError: true,
           partialResults: true,
           onSoundLevelChange: (level) {
-            // print('音量级别: $level');  // 注释掉避免太多日志
+            // print('Sound level: $level');
           },
-          listenFor: const Duration(seconds: 30),  // 监听10秒
-          pauseFor: const Duration(seconds: 5),   // 暂停3秒后停止
+          listenFor: const Duration(seconds: 10),
+          pauseFor: const Duration(seconds: 3),
         );
       }
     } else {
       if (mounted) {
         setState(() {
           _isListening = false;
-          _statusMessage = '识别完成';
+          _statusMessage = 'Recognition completed';
         });
       }
       _animationController.stop();
       await _speech.stop();
 
       if (_text.isNotEmpty && mounted) {
-        // 延迟一下确保状态更新完成
         Future.delayed(const Duration(milliseconds: 100), () {
           if (mounted) {
             _processVoiceInput();
@@ -148,7 +155,7 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
     if (mounted) {
       setState(() {
         _isProcessing = true;
-        _statusMessage = '正在理解您的需求...';
+        _statusMessage = 'Understanding your request...';
       });
     }
 
@@ -163,12 +170,12 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
       // 解析语音输入
       final parsedData = await _aiParser.parseVoiceInput(_text);
       if (parsedData == null) {
-        throw Exception('解析失败');
+        throw Exception('Parsing failed');
       }
 
       // 创建任务
       final task = parsedData.toTask();
-      if (!mounted) return;  // 检查是否还在
+      if (!mounted) return;
 
       final provider = context.read<TaskProvider>();
       await provider.addTask(task);
@@ -182,8 +189,8 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '已创建任务"${task.title}"并安排到 '
-                    '${suggestedDateTime.month}月${suggestedDateTime.day}日 '
+                'Created task "${task.title}" and scheduled for '
+                    '${suggestedDateTime.month}/${suggestedDateTime.day} '
                     '${suggestedDateTime.hour.toString().padLeft(2, '0')}:'
                     '${suggestedDateTime.minute.toString().padLeft(2, '0')}',
               ),
@@ -193,13 +200,13 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
       } else if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('已创建任务"${task.title}"')),
+          SnackBar(content: Text('Created task "${task.title}"')),
         );
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _statusMessage = '处理失败: $e';
+          _statusMessage = 'Processing failed: $e';
           _isProcessing = false;
         });
       }
@@ -213,13 +220,13 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text('设置 Claude API Key'),
+        title: const Text('Set Claude API Key'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              '首次使用需要设置 Claude API Key\n'
-                  '请访问 https://console.anthropic.com 获取',
+              'First time usage requires Claude API Key\n'
+                  'Please visit https://console.anthropic.com to get one',
               style: TextStyle(fontSize: 14),
             ),
             const SizedBox(height: 16),
@@ -240,7 +247,7 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
               Navigator.of(context).pop();
               Navigator.of(context).pop();
             },
-            child: const Text('取消'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -250,12 +257,12 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
                 if (mounted) {
                   setState(() {
                     _isProcessing = false;
-                    _statusMessage = '请重新尝试';
+                    _statusMessage = 'Please try again';
                   });
                 }
               }
             },
-            child: const Text('保存'),
+            child: const Text('Save'),
           ),
         ],
       ),
@@ -265,7 +272,7 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
   @override
   void dispose() {
     _speech.stop();
-    _speech.cancel();  // 添加取消所有回调
+    _speech.cancel();
     _animationController.dispose();
     super.dispose();
   }
@@ -280,8 +287,31 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              '语音创建任务',
+              'Voice Task Creation',
               style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 16),
+
+            // 语言选择下拉菜单
+            DropdownButtonFormField<String>(
+              value: _selectedLocale,
+              decoration: const InputDecoration(
+                labelText: 'Language',
+                border: OutlineInputBorder(),
+              ),
+              items: _localeNames.entries.map((entry) {
+                return DropdownMenuItem<String>(
+                  value: entry.key,
+                  child: Text(entry.value),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    _selectedLocale = value;
+                  });
+                }
+              },
             ),
             const SizedBox(height: 24),
 
@@ -348,10 +378,12 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
 
             const SizedBox(height: 24),
 
-            // 提示信息
+            // 提示信息（英文版）
             Text(
-              '例如：明天下午3点开会，大概2小时\n'
-                  '周五之前完成项目报告，需要高度专注',
+              'Examples:\n'
+                  '"Schedule meeting tomorrow at 3 PM for 2 hours"\n'
+                  '"Finish project report by Friday, needs high focus"\n'
+                  '"Call mom sometime this week"',
               style: Theme.of(context).textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),
@@ -363,7 +395,7 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
               onPressed: _isProcessing
                   ? null
                   : () => Navigator.of(context).pop(),
-              child: const Text('关闭'),
+              child: const Text('Close'),
             ),
           ],
         ),

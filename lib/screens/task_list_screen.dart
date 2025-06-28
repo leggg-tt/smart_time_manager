@@ -9,10 +9,10 @@ import '../widgets/voice_input_dialog.dart';
 import '../services/scheduler_service.dart';
 
 class TaskListScreen extends StatefulWidget {
-  const TaskListScreen({super.key});  // 添加 const 构造函数
+  const TaskListScreen({super.key});
 
   @override
-  State<TaskListScreen> createState() => _TaskListScreenState();  // 使用 State<TaskListScreen>
+  State<TaskListScreen> createState() => _TaskListScreenState();
 }
 
 class _TaskListScreenState extends State<TaskListScreen>
@@ -47,9 +47,9 @@ class _TaskListScreenState extends State<TaskListScreen>
               TabBar(
                 controller: _tabController,
                 tabs: [
-                  Tab(text: '待安排 (${pendingTasks.length})'),
-                  Tab(text: '已安排 (${scheduledTasks.length})'),
-                  Tab(text: '已完成 (${completedTasks.length})'),
+                  Tab(text: 'Pending (${pendingTasks.length})'),
+                  Tab(text: 'Scheduled (${scheduledTasks.length})'),
+                  Tab(text: 'Completed (${completedTasks.length})'),
                 ],
               ),
               Expanded(
@@ -69,21 +69,21 @@ class _TaskListScreenState extends State<TaskListScreen>
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          // 语音输入按钮
+          // Voice input button
           FloatingActionButton.small(
             onPressed: () => _showVoiceInputDialog(context),
             heroTag: 'voice',
             backgroundColor: Theme.of(context).colorScheme.secondary,
             child: const Icon(Icons.mic, size: 20),
-            tooltip: '语音创建任务',
+            tooltip: 'Voice create task',
           ),
           const SizedBox(height: 12),
-          // 普通添加按钮
+          // Add task button
           FloatingActionButton(
             onPressed: () => _showAddTaskDialog(context),
             heroTag: 'add',
             child: const Icon(Icons.add),
-            tooltip: '添加任务',
+            tooltip: 'Add task',
           ),
         ],
       ),
@@ -95,7 +95,7 @@ class _TaskListScreenState extends State<TaskListScreen>
       return _buildEmptyState(status);
     }
 
-    // 根据优先级分组
+    // Group by priority
     final highPriorityTasks = tasks
         .where((t) => t.priority == Priority.high)
         .toList();
@@ -112,7 +112,7 @@ class _TaskListScreenState extends State<TaskListScreen>
         if (highPriorityTasks.isNotEmpty) ...[
           _buildPrioritySection(
             context,
-            '高优先级',
+            'High Priority',
             highPriorityTasks,
             Colors.red,
           ),
@@ -121,7 +121,7 @@ class _TaskListScreenState extends State<TaskListScreen>
         if (mediumPriorityTasks.isNotEmpty) ...[
           _buildPrioritySection(
             context,
-            '中优先级',
+            'Medium Priority',
             mediumPriorityTasks,
             Colors.orange,
           ),
@@ -130,7 +130,7 @@ class _TaskListScreenState extends State<TaskListScreen>
         if (lowPriorityTasks.isNotEmpty) ...[
           _buildPrioritySection(
             context,
-            '低优先级',
+            'Low Priority',
             lowPriorityTasks,
             Colors.blue,
           ),
@@ -206,22 +206,22 @@ class _TaskListScreenState extends State<TaskListScreen>
     switch (status) {
       case TaskStatus.pending:
         icon = Icons.inbox;
-        title = '没有待安排的任务';
-        subtitle = '点击右下角按钮创建新任务';
+        title = 'No pending tasks';
+        subtitle = 'Tap the + button to create a new task';
         break;
       case TaskStatus.scheduled:
         icon = Icons.event_note;
-        title = '没有已安排的任务';
-        subtitle = '从待安排列表中选择任务进行安排';
+        title = 'No scheduled tasks';
+        subtitle = 'Schedule tasks from the pending list';
         break;
       case TaskStatus.completed:
         icon = Icons.check_circle_outline;
-        title = '还没有完成的任务';
-        subtitle = '完成任务后会在这里显示';
+        title = 'No completed tasks yet';
+        subtitle = 'Completed tasks will appear here';
         break;
       default:
         icon = Icons.list;
-        title = '暂无任务';
+        title = 'No tasks';
         subtitle = '';
     }
 
@@ -258,7 +258,7 @@ class _TaskListScreenState extends State<TaskListScreen>
   void _showAddTaskDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => const AddTaskDialog(),  // 添加 const
+      builder: (context) => const AddTaskDialog(),
     );
   }
 
@@ -273,9 +273,8 @@ class _TaskListScreenState extends State<TaskListScreen>
     if (task.status == TaskStatus.pending) {
       _scheduleTask(context, task);
     } else {
-      // TODO: 显示任务详情
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('任务: ${task.title}')),
+        SnackBar(content: Text('Task: ${task.title}')),
       );
     }
   }
@@ -291,22 +290,22 @@ class _TaskListScreenState extends State<TaskListScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('删除任务'),
-        content: Text('确定要删除"${task.title}"吗？'),
+        title: const Text('Delete Task'),
+        content: Text('Are you sure you want to delete "${task.title}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
               context.read<TaskProvider>().deleteTask(task.id);
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('任务已删除')),
+                const SnackBar(content: Text('Task deleted')),
               );
             },
-            child: const Text('删除'),
+            child: const Text('Delete'),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
           ),
         ],
@@ -315,7 +314,7 @@ class _TaskListScreenState extends State<TaskListScreen>
   }
 }
 
-// 改进的任务安排对话框
+// Enhanced task scheduling dialog
 class _ScheduleTaskDialog extends StatefulWidget {
   final Task task;
 
@@ -328,18 +327,18 @@ class _ScheduleTaskDialog extends StatefulWidget {
 class _ScheduleTaskDialogState extends State<_ScheduleTaskDialog> {
   DateTime _selectedDate = DateTime.now();
   TimeOfDay? _selectedTime;
-  bool _isSmartMode = true; // true: 智能推荐, false: 手动选择
+  bool _isSmartMode = true; // true: smart recommendation, false: manual selection
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('安排任务: ${widget.task.title}'),
+      title: Text('Schedule Task: ${widget.task.title}'),
       content: Container(
         width: double.maxFinite,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 任务信息
+            // Task information
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -353,15 +352,14 @@ class _ScheduleTaskDialogState extends State<_ScheduleTaskDialog> {
                     children: [
                       Icon(Icons.schedule, size: 16),
                       const SizedBox(width: 8),
-                      Text('时长: ${widget.task.durationDisplay}'),
+                      Text('Duration: ${widget.task.durationDisplay}'),
                     ],
                   ),
-                  const SizedBox(height: 4),
                   Row(
                     children: [
                       Icon(Icons.battery_full, size: 16),
                       const SizedBox(width: 8),
-                      Text('精力需求: ${widget.task.energyRequired.displayName}'),
+                      Text('Energy Required: ${widget.task.energyRequired.displayName}'),
                     ],
                   ),
                 ],
@@ -369,17 +367,17 @@ class _ScheduleTaskDialogState extends State<_ScheduleTaskDialog> {
             ),
             const SizedBox(height: 16),
 
-            // 模式选择
+            // Mode selection
             SegmentedButton<bool>(
               segments: const [
                 ButtonSegment(
                   value: true,
-                  label: Text('智能推荐'),
+                  label: Text('Smart Schedule'),
                   icon: Icon(Icons.auto_awesome),
                 ),
                 ButtonSegment(
                   value: false,
-                  label: Text('手动选择'),
+                  label: Text('Manual Select'),
                   icon: Icon(Icons.edit_calendar),
                 ),
               ],
@@ -392,12 +390,12 @@ class _ScheduleTaskDialogState extends State<_ScheduleTaskDialog> {
             ),
             const SizedBox(height: 16),
 
-            // 日期选择
+            // Date selection
             ListTile(
               leading: const Icon(Icons.calendar_today),
-              title: const Text('选择日期'),
+              title: const Text('Select Date'),
               subtitle: Text(
-                '${_selectedDate.year}年${_selectedDate.month}月${_selectedDate.day}日',
+                '${_selectedDate.month}/${_selectedDate.day}/${_selectedDate.year}',
               ),
               onTap: () async {
                 final date = await showDatePicker(
@@ -410,21 +408,21 @@ class _ScheduleTaskDialogState extends State<_ScheduleTaskDialog> {
                 if (date != null) {
                   setState(() {
                     _selectedDate = date;
-                    _selectedTime = null; // 重置时间选择
+                    _selectedTime = null; // Reset time selection
                   });
                 }
               },
             ),
 
-            // 手动模式下的时间选择
+            // Time selection in manual mode
             if (!_isSmartMode) ...[
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.access_time),
-                title: const Text('选择开始时间'),
+                title: const Text('Select Start Time'),
                 subtitle: Text(
                   _selectedTime == null
-                      ? '点击选择时间'
+                      ? 'Tap to select time'
                       : '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}',
                 ),
                 onTap: () async {
@@ -454,8 +452,8 @@ class _ScheduleTaskDialogState extends State<_ScheduleTaskDialog> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          '任务将从 ${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')} '
-                              '持续到 ${_calculateEndTime(_selectedTime!)}',
+                          'Task will run from ${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')} '
+                              'to ${_calculateEndTime(_selectedTime!)}',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ),
@@ -470,13 +468,13 @@ class _ScheduleTaskDialogState extends State<_ScheduleTaskDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('取消'),
+          child: const Text('Cancel'),
         ),
         ElevatedButton(
           onPressed: (_isSmartMode || (!_isSmartMode && _selectedTime != null))
               ? () => _handleSchedule(context)
               : null,
-          child: Text(_isSmartMode ? '智能安排' : '确认安排'),
+          child: Text(_isSmartMode ? 'Smart Schedule' : 'Confirm'),
         ),
       ],
     );
@@ -494,7 +492,7 @@ class _ScheduleTaskDialogState extends State<_ScheduleTaskDialog> {
     final provider = context.read<TaskProvider>();
 
     if (_isSmartMode) {
-      // 智能推荐模式
+      // Smart recommendation mode
       Navigator.of(context).pop();
 
       final slots = await provider.getRecommendedSlots(
@@ -503,7 +501,7 @@ class _ScheduleTaskDialogState extends State<_ScheduleTaskDialog> {
       );
 
       if (slots.isNotEmpty) {
-        // 显示推荐时间选择对话框
+        // Show recommended time slots dialog
         showDialog(
           context: context,
           builder: (context) => _TimeSlotSelectionDialog(
@@ -517,14 +515,14 @@ class _ScheduleTaskDialogState extends State<_ScheduleTaskDialog> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      '已将任务安排到 ${_formatTime(slot.startTime)}',
+                      'Task scheduled for ${_formatTime(slot.startTime)}',
                     ),
                   ),
                 );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('安排失败，请重试'),
+                    content: Text('Failed to schedule. Please try again.'),
                     backgroundColor: Colors.red,
                   ),
                 );
@@ -533,49 +531,49 @@ class _ScheduleTaskDialogState extends State<_ScheduleTaskDialog> {
           ),
         );
       } else {
-        // 没有找到合适的时间段，提供手动选择
+        // No suitable time slots found, offer manual selection
         final shouldManual = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('未找到推荐时间'),
+            title: const Text('No Recommended Times'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('智能推荐未能找到最佳时间段，可能的原因：'),
+                const Text('Smart scheduling couldn\'t find optimal time slots. Possible reasons:'),
                 const SizedBox(height: 8),
-                Text('• 当天已安排的任务较多',
+                Text('• Day already has many scheduled tasks',
                     style: Theme.of(context).textTheme.bodySmall),
-                Text('• 没有匹配任务需求的时间块',
+                Text('• No time blocks match task requirements',
                     style: Theme.of(context).textTheme.bodySmall),
-                Text('• 高能量时段已被占用',
+                Text('• High-energy periods are occupied',
                     style: Theme.of(context).textTheme.bodySmall),
                 const SizedBox(height: 16),
-                const Text('您可以手动选择一个时间段。'),
+                const Text('You can manually select a time slot.'),
               ],
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('取消'),
+                child: const Text('Cancel'),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('手动选择'),
+                child: const Text('Manual Select'),
               ),
             ],
           ),
         );
 
         if (shouldManual == true) {
-          // 重新显示对话框，切换到手动模式
+          // Show dialog again, switch to manual mode
           setState(() {
             _isSmartMode = false;
           });
         }
       }
     } else {
-      // 手动选择模式
+      // Manual selection mode
       final startTime = DateTime(
         _selectedDate.year,
         _selectedDate.month,
@@ -584,27 +582,27 @@ class _ScheduleTaskDialogState extends State<_ScheduleTaskDialog> {
         _selectedTime!.minute,
       );
 
-      // 检查时间冲突
+      // Check for time conflicts
       final canSchedule = await provider.canScheduleTask(widget.task, startTime);
 
       if (!canSchedule) {
-        // 显示冲突提示
+        // Show conflict warning
         final shouldForce = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('时间冲突'),
+            title: const Text('Time Conflict'),
             content: const Text(
-              '选择的时间段与已有任务冲突。\n'
-                  '您仍要继续安排吗？',
+              'The selected time slot conflicts with existing tasks.\n'
+                  'Do you still want to schedule it?',
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('重新选择'),
+                child: const Text('Choose Another Time'),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('强制安排'),
+                child: const Text('Force Schedule'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange,
                 ),
@@ -616,7 +614,7 @@ class _ScheduleTaskDialogState extends State<_ScheduleTaskDialog> {
         if (shouldForce != true) return;
       }
 
-      // 执行安排
+      // Execute scheduling
       final success = await provider.scheduleTask(widget.task, startTime);
       Navigator.of(context).pop();
 
@@ -624,14 +622,14 @@ class _ScheduleTaskDialogState extends State<_ScheduleTaskDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '已将任务安排到 ${_formatTime(startTime)}',
+              'Task scheduled for ${_formatTime(startTime)}',
             ),
           ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('安排失败，请重试'),
+            content: Text('Failed to schedule. Please try again.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -640,13 +638,13 @@ class _ScheduleTaskDialogState extends State<_ScheduleTaskDialog> {
   }
 
   String _formatTime(DateTime time) {
-    return '${time.month}月${time.day}日 '
+    return '${time.month}/${time.day} '
         '${time.hour.toString().padLeft(2, '0')}:'
         '${time.minute.toString().padLeft(2, '0')}';
   }
 }
 
-// 时间段选择对话框
+// Time slot selection dialog
 class _TimeSlotSelectionDialog extends StatelessWidget {
   final Task task;
   final List<TimeSlot> slots;
@@ -661,7 +659,7 @@ class _TimeSlotSelectionDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('选择时间段'),
+      title: const Text('Select Time Slot'),
       content: SizedBox(
         width: double.maxFinite,
         child: ListView.builder(
@@ -685,7 +683,7 @@ class _TimeSlotSelectionDialog extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (slot.timeBlock != null)
-                      Text('时间块: ${slot.timeBlock!.name}'),
+                      Text('Time Block: ${slot.timeBlock!.name}'),
                     ...slot.reasons.map((reason) => Text('• $reason')),
                   ],
                 ),
@@ -698,7 +696,7 @@ class _TimeSlotSelectionDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('取消'),
+          child: const Text('Cancel'),
         ),
       ],
     );

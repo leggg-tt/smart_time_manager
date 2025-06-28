@@ -41,7 +41,7 @@ class TimeBlockListItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 标题行
+                // Title row
                 Row(
                   children: [
                     Expanded(
@@ -68,7 +68,7 @@ class TimeBlockListItem extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(
-                                    '默认',
+                                    'Default',                  // 原来是 '默认'
                                     style: TextStyle(
                                       fontSize: 10,
                                       color: Theme.of(context).colorScheme.primary,
@@ -87,7 +87,7 @@ class TimeBlockListItem extends StatelessWidget {
                       ),
                     ),
 
-                    // 操作按钮
+                    // Action buttons
                     if (onToggle != null)
                       Switch(
                         value: timeBlock.isActive,
@@ -97,19 +97,19 @@ class TimeBlockListItem extends StatelessWidget {
                       IconButton(
                         icon: const Icon(Icons.delete_outline),
                         onPressed: onDelete,
-                        tooltip: '删除',
+                        tooltip: 'Delete',                     // 原来是 '删除'
                       ),
                   ],
                 ),
 
                 const SizedBox(height: 12),
 
-                // 工作日显示
+                // Weekday display
                 _buildWeekdayChips(context),
 
                 const SizedBox(height: 12),
 
-                // 特性标签
+                // Feature tags
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -117,13 +117,13 @@ class TimeBlockListItem extends StatelessWidget {
                     _buildFeatureChip(
                       context,
                       Icons.battery_full,
-                      '能量: ${timeBlock.energyLevel.displayName}',
+                      'Energy: ${timeBlock.energyLevel.displayName}', // 原来是 '能量: ${timeBlock.energyLevel.displayName}'
                       _getEnergyColor(timeBlock.energyLevel),
                     ),
                     _buildFeatureChip(
                       context,
                       Icons.psychology,
-                      '专注: ${timeBlock.focusLevel.displayName}',
+                      'Focus: ${timeBlock.focusLevel.displayName}',   // 原来是 '专注: ${timeBlock.focusLevel.displayName}'
                       Colors.indigo,
                     ),
                   ],
@@ -131,12 +131,12 @@ class TimeBlockListItem extends StatelessWidget {
 
                 const SizedBox(height: 12),
 
-                // 适合的任务类型
+                // Suitable task types
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '适合的任务类型',
+                      'Suitable Task Types',                  // 原来是 '适合的任务类型'
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: 4),
@@ -181,7 +181,7 @@ class TimeBlockListItem extends StatelessWidget {
   }
 
   Widget _buildWeekdayChips(BuildContext context) {
-    const weekdays = ['一', '二', '三', '四', '五', '六', '日'];
+    const weekdays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];  // 原来是 ['一', '二', '三', '四', '五', '六', '日']
 
     return Row(
       mainAxisSize: MainAxisSize.min,

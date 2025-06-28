@@ -23,7 +23,7 @@ class _AddTimeBlockDialogState extends State<AddTimeBlockDialog> {
 
   TimeOfDay _startTime = const TimeOfDay(hour: 9, minute: 0);
   TimeOfDay _endTime = const TimeOfDay(hour: 11, minute: 0);
-  List<int> _selectedDays = [1, 2, 3, 4, 5]; // 默认周一到周五
+  List<int> _selectedDays = [1, 2, 3, 4, 5]; // Default Monday to Friday
   EnergyLevel _energyLevel = EnergyLevel.medium;
   FocusLevel _focusLevel = FocusLevel.medium;
   List<TaskCategory> _suitableCategories = [];
@@ -99,22 +99,22 @@ class _AddTimeBlockDialogState extends State<AddTimeBlockDialog> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isEditing ? '编辑时间块' : '添加时间块',
+                    isEditing ? 'Edit Time Block' : 'Add Time Block', // 原来是 '编辑时间块' : '添加时间块'
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 24),
 
-                  // 基本信息
+                  // Basic information
                   TextFormField(
                     controller: _nameController,
                     decoration: const InputDecoration(
-                      labelText: '时间块名称',
-                      hintText: '例如：早晨黄金时间',
+                      labelText: 'Time Block Name',              // 原来是 '时间块名称'
+                      hintText: 'e.g., Morning Golden Hours',    // 原来是 '例如：早晨黄金时间'
                       border: OutlineInputBorder(),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return '请输入时间块名称';
+                        return 'Please enter time block name';   // 原来是 '请输入时间块名称'
                       }
                       return null;
                     },
@@ -124,21 +124,21 @@ class _AddTimeBlockDialogState extends State<AddTimeBlockDialog> {
                   TextFormField(
                     controller: _descriptionController,
                     decoration: const InputDecoration(
-                      labelText: '描述（可选）',
-                      hintText: '描述这个时间段的特点',
+                      labelText: 'Description (Optional)',       // 原来是 '描述（可选）'
+                      hintText: 'Describe characteristics of this time period', // 原来是 '描述这个时间段的特点'
                       border: OutlineInputBorder(),
                     ),
                     maxLines: 2,
                   ),
                   const SizedBox(height: 24),
 
-                  // 时间范围
+                  // Time range
                   Row(
                     children: [
                       Expanded(
                         child: _buildTimeSelector(
                           context,
-                          '开始时间',
+                          'Start Time',                           // 原来是 '开始时间'
                           _startTime,
                               (time) => setState(() => _startTime = time),
                         ),
@@ -147,7 +147,7 @@ class _AddTimeBlockDialogState extends State<AddTimeBlockDialog> {
                       Expanded(
                         child: _buildTimeSelector(
                           context,
-                          '结束时间',
+                          'End Time',                             // 原来是 '结束时间'
                           _endTime,
                               (time) => setState(() => _endTime = time),
                         ),
@@ -156,18 +156,18 @@ class _AddTimeBlockDialogState extends State<AddTimeBlockDialog> {
                   ),
                   const SizedBox(height: 24),
 
-                  // 适用星期
+                  // Applicable weekdays
                   Text(
-                    '适用星期',
+                    'Days of Week',                               // 原来是 '适用星期'
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   const SizedBox(height: 8),
                   _buildWeekdaySelector(),
                   const SizedBox(height: 24),
 
-                  // 时间块特性
+                  // Time block characteristics
                   Text(
-                    '时间块特性',
+                    'Time Block Characteristics',                 // 原来是 '时间块特性'
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   const SizedBox(height: 8),
@@ -175,7 +175,7 @@ class _AddTimeBlockDialogState extends State<AddTimeBlockDialog> {
                     children: [
                       Expanded(
                         child: _buildDropdown<EnergyLevel>(
-                          '能量水平',
+                          'Energy Level',                         // 原来是 '能量水平'
                           _energyLevel,
                           EnergyLevel.values,
                               (value) => setState(() => _energyLevel = value!),
@@ -185,7 +185,7 @@ class _AddTimeBlockDialogState extends State<AddTimeBlockDialog> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: _buildDropdown<FocusLevel>(
-                          '专注度',
+                          'Focus Level',                          // 原来是 '专注度'
                           _focusLevel,
                           FocusLevel.values,
                               (value) => setState(() => _focusLevel = value!),
@@ -196,9 +196,9 @@ class _AddTimeBlockDialogState extends State<AddTimeBlockDialog> {
                   ),
                   const SizedBox(height: 24),
 
-                  // 适合的任务类型
+                  // Suitable task types
                   Text(
-                    '适合的任务类型',
+                    'Suitable Task Types',                        // 原来是 '适合的任务类型'
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   const SizedBox(height: 8),
@@ -229,9 +229,9 @@ class _AddTimeBlockDialogState extends State<AddTimeBlockDialog> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 适合的优先级
+                  // Suitable task priorities
                   Text(
-                    '适合的任务优先级',
+                    'Suitable Task Priorities',                   // 原来是 '适合的任务优先级'
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   const SizedBox(height: 8),
@@ -255,9 +255,9 @@ class _AddTimeBlockDialogState extends State<AddTimeBlockDialog> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 颜色选择
+                  // Color selection
                   Text(
-                    '显示颜色',
+                    'Display Color',                              // 原来是 '显示颜色'
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   const SizedBox(height: 8),
@@ -289,18 +289,18 @@ class _AddTimeBlockDialogState extends State<AddTimeBlockDialog> {
                   ),
                   const SizedBox(height: 24),
 
-                  // 操作按钮
+                  // Action buttons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('取消'),
+                        child: const Text('Cancel'),             // 原来是 '取消'
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton(
                         onPressed: _submitTimeBlock,
-                        child: Text(isEditing ? '保存修改' : '添加时间块'),
+                        child: Text(isEditing ? 'Save Changes' : 'Add Time Block'), // 原来是 '保存修改' : '添加时间块'
                       ),
                     ],
                   ),
@@ -326,7 +326,7 @@ class _AddTimeBlockDialogState extends State<AddTimeBlockDialog> {
           initialTime: time,
           builder: (context, child) {
             return MediaQuery(
-              data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+              data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false), // 改为12小时制
               child: child!,
             );
           },
@@ -356,7 +356,7 @@ class _AddTimeBlockDialogState extends State<AddTimeBlockDialog> {
   }
 
   Widget _buildWeekdaySelector() {
-    const weekdays = ['一', '二', '三', '四', '五', '六', '日'];
+    const weekdays = ['M', 'T', 'W', 'T', 'F', 'S', 'S']; // 改为英文缩写
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -429,14 +429,14 @@ class _AddTimeBlockDialogState extends State<AddTimeBlockDialog> {
 
     if (_selectedDays.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请至少选择一个星期')),
+        const SnackBar(content: Text('Please select at least one day')), // 原来是 '请至少选择一个星期'
       );
       return;
     }
 
     if (_suitableCategories.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请至少选择一种适合的任务类型')),
+        const SnackBar(content: Text('Please select at least one suitable task type')), // 原来是 '请至少选择一种适合的任务类型'
       );
       return;
     }
@@ -468,12 +468,12 @@ class _AddTimeBlockDialogState extends State<AddTimeBlockDialog> {
       if (widget.timeBlock != null) {
         await provider.updateTimeBlock(timeBlock);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('时间块已更新')),
+          const SnackBar(content: Text('Time block updated')), // 原来是 '时间块已更新'
         );
       } else {
         await provider.addTimeBlock(timeBlock);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('时间块已添加')),
+          const SnackBar(content: Text('Time block added')), // 原来是 '时间块已添加'
         );
       }
 
@@ -481,7 +481,7 @@ class _AddTimeBlockDialogState extends State<AddTimeBlockDialog> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('操作失败: $e'),
+          content: Text('Operation failed: $e'),           // 原来是 '操作失败: $e'
           backgroundColor: Colors.red,
         ),
       );

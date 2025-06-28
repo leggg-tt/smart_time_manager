@@ -167,14 +167,14 @@ class Task {
   // 获取任务持续时间的友好显示
   String get durationDisplay {
     if (durationMinutes < 60) {
-      return '$durationMinutes分钟';
+      return '$durationMinutes min';
     } else {
       final hours = durationMinutes ~/ 60;
       final minutes = durationMinutes % 60;
       if (minutes == 0) {
-        return '$hours小时';
+        return '$hours hr';
       } else {
-        return '$hours小时$minutes分钟';
+        return '$hours hr $minutes min';
       }
     }
   }

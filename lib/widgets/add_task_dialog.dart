@@ -30,7 +30,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
   TaskCategory _taskCategory = TaskCategory.routine;
   DateTime? _deadline;
   bool _scheduleImmediately = false;
-  int _scheduleOption = 0; // 0: 不安排, 1: 指定日期
+  int _scheduleOption = 0; // 0: Don't schedule, 1: Specify date
   DateTime? _scheduledDate;
 
   @override
@@ -55,35 +55,35 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '添加新任务',
+                    'Add New Task',                        // 原来是 '添加新任务'
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 24),
 
-                  // 任务名称
+                  // Task name
                   TextFormField(
                     controller: _titleController,
                     decoration: const InputDecoration(
-                      labelText: '任务名称',
-                      hintText: '例如：准备项目演示',
+                      labelText: 'Task Name',              // 原来是 '任务名称'
+                      hintText: 'e.g., Prepare project presentation', // 原来是 '例如：准备项目演示'
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.task),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return '请输入任务名称';
+                        return 'Please enter task name';   // 原来是 '请输入任务名称'
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 16),
 
-                  // 任务描述
+                  // Task description
                   TextFormField(
                     controller: _descriptionController,
                     decoration: const InputDecoration(
-                      labelText: '任务描述（可选）',
-                      hintText: '添加更多细节...',
+                      labelText: 'Description (Optional)',  // 原来是 '任务描述（可选）'
+                      hintText: 'Add more details...',      // 原来是 '添加更多细节...'
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.description),
                     ),
@@ -91,9 +91,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                   ),
                   const SizedBox(height: 24),
 
-                  // 预估时长
+                  // Estimated duration
                   Text(
-                    '预估时长',
+                    'Estimated Duration',                   // 原来是 '预估时长'
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   const SizedBox(height: 8),
@@ -114,7 +114,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                   ),
                   const SizedBox(height: 24),
 
-                  // 任务属性
+                  // Task properties
                   Row(
                     children: [
                       Expanded(
@@ -122,7 +122,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '优先级',
+                              'Priority',                    // 原来是 '优先级'
                               style: Theme.of(context).textTheme.titleSmall,
                             ),
                             const SizedBox(height: 8),
@@ -130,17 +130,17 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                               segments: const [
                                 ButtonSegment(
                                   value: Priority.low,
-                                  label: Text('低'),
+                                  label: Text('Low'),        // 原来是 '低'
                                   icon: Icon(Icons.arrow_downward, size: 16),
                                 ),
                                 ButtonSegment(
                                   value: Priority.medium,
-                                  label: Text('中'),
+                                  label: Text('Medium'),     // 原来是 '中'
                                   icon: Icon(Icons.remove, size: 16),
                                 ),
                                 ButtonSegment(
                                   value: Priority.high,
-                                  label: Text('高'),
+                                  label: Text('High'),       // 原来是 '高'
                                   icon: Icon(Icons.arrow_upward, size: 16),
                                 ),
                               ],
@@ -156,9 +156,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 能量需求
+                  // Energy requirement
                   Text(
-                    '精力需求',
+                    'Energy Required',                       // 原来是 '精力需求'
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   const SizedBox(height: 8),
@@ -166,17 +166,17 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                     segments: const [
                       ButtonSegment(
                         value: EnergyLevel.low,
-                        label: Text('低'),
+                        label: Text('Low'),                 // 原来是 '低'
                         icon: Icon(Icons.battery_1_bar, size: 16),
                       ),
                       ButtonSegment(
                         value: EnergyLevel.medium,
-                        label: Text('中'),
+                        label: Text('Medium'),              // 原来是 '中'
                         icon: Icon(Icons.battery_4_bar, size: 16),
                       ),
                       ButtonSegment(
                         value: EnergyLevel.high,
-                        label: Text('高'),
+                        label: Text('High'),                // 原来是 '高'
                         icon: Icon(Icons.battery_full, size: 16),
                       ),
                     ],
@@ -187,9 +187,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 专注度需求
+                  // Focus requirement
                   Text(
-                    '专注度需求',
+                    'Focus Required',                        // 原来是 '专注度需求'
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   const SizedBox(height: 8),
@@ -197,17 +197,17 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                     segments: const [
                       ButtonSegment(
                         value: FocusLevel.light,
-                        label: Text('轻度'),
+                        label: Text('Light'),               // 原来是 '轻度'
                         icon: Icon(Icons.blur_on, size: 16),
                       ),
                       ButtonSegment(
                         value: FocusLevel.medium,
-                        label: Text('中度'),
+                        label: Text('Medium'),              // 原来是 '中度'
                         icon: Icon(Icons.center_focus_weak, size: 16),
                       ),
                       ButtonSegment(
                         value: FocusLevel.deep,
-                        label: Text('深度'),
+                        label: Text('Deep'),                // 原来是 '深度'
                         icon: Icon(Icons.center_focus_strong, size: 16),
                       ),
                     ],
@@ -218,9 +218,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 任务类型
+                  // Task category
                   Text(
-                    '任务类型',
+                    'Task Category',                         // 原来是 '任务类型'
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   const SizedBox(height: 8),
@@ -248,16 +248,15 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 截止时间
+                  // Deadline
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.event),
-                    title: const Text('截止时间'),
+                    title: const Text('Deadline'),          // 原来是 '截止时间'
                     subtitle: _deadline == null
-                        ? const Text('未设置')
+                        ? const Text('Not set')             // 原来是 '未设置'
                         : Text(
-                      '${_deadline!.year}年${_deadline!.month}月'
-                          '${_deadline!.day}日',
+                      '${_deadline!.month}/${_deadline!.day}/${_deadline!.year}', // 改为美式日期格式
                     ),
                     trailing: IconButton(
                       icon: const Icon(Icons.calendar_today),
@@ -265,17 +264,17 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                     ),
                   ),
 
-                  // 任务安排选项
+                  // Task scheduling options
                   const SizedBox(height: 16),
                   Text(
-                    '任务安排',
+                    'Task Scheduling',                       // 原来是 '任务安排'
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   const SizedBox(height: 8),
                   RadioListTile<int>(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('暂不安排'),
-                    subtitle: const Text('稍后手动安排时间'),
+                    title: const Text('Don\'t schedule now'), // 原来是 '暂不安排'
+                    subtitle: const Text('Schedule manually later'), // 原来是 '稍后手动安排时间'
                     value: 0,
                     groupValue: _scheduleOption,
                     onChanged: (value) {
@@ -287,10 +286,10 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                   ),
                   RadioListTile<int>(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('指定日期'),
+                    title: const Text('Specify date'),      // 原来是 '指定日期'
                     subtitle: Text(_scheduledDate == null
-                        ? '选择要安排的日期'
-                        : '${_scheduledDate!.year}年${_scheduledDate!.month}月${_scheduledDate!.day}日'),
+                        ? 'Choose date to schedule'          // 原来是 '选择要安排的日期'
+                        : '${_scheduledDate!.month}/${_scheduledDate!.day}/${_scheduledDate!.year}'), // 改为美式日期格式
                     value: 1,
                     groupValue: _scheduleOption,
                     onChanged: (value) async {
@@ -307,8 +306,8 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                   if (_scheduleOption == 1 && _scheduledDate != null)
                     CheckboxListTile(
                       contentPadding: const EdgeInsets.only(left: 56),
-                      title: const Text('智能推荐时间'),
-                      subtitle: const Text('在选定日期自动推荐最佳时间段'),
+                      title: const Text('Smart recommend time'), // 原来是 '智能推荐时间'
+                      subtitle: const Text('Auto-recommend optimal time slots on selected date'), // 原来是 '在选定日期自动推荐最佳时间段'
                       value: _scheduleImmediately,
                       onChanged: (value) {
                         setState(() => _scheduleImmediately = value ?? false);
@@ -316,18 +315,18 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                     ),
                   const SizedBox(height: 24),
 
-                  // 操作按钮
+                  // Action buttons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('取消'),
+                        child: const Text('Cancel'),        // 原来是 '取消'
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton(
                         onPressed: _submitTask,
-                        child: const Text('创建任务'),
+                        child: const Text('Create Task'),   // 原来是 '创建任务'
                       ),
                     ],
                   ),
@@ -342,14 +341,14 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
 
   String _formatDuration(int minutes) {
     if (minutes < 60) {
-      return '$minutes分钟';
+      return '${minutes}min';                            // 原来是 '$minutes分钟'
     } else {
       final hours = minutes ~/ 60;
       final mins = minutes % 60;
       if (mins == 0) {
-        return '$hours小时';
+        return '${hours}h';                              // 原来是 '$hours小时'
       } else {
-        return '$hours小时$mins分钟';
+        return '${hours}h ${mins}min';                   // 原来是 '$hours小时$mins分钟'
       }
     }
   }
@@ -404,29 +403,29 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('任务"${task.title}"已创建'),
+          content: Text('Task "${task.title}" created'),  // 原来是 '任务"${task.title}"已创建'
           action: _scheduleImmediately && _scheduledDate != null
               ? SnackBarAction(
-            label: '查看推荐',
+            label: 'View Recommendations',             // 原来是 '查看推荐'
             onPressed: () async {
-              // 获取指定日期的推荐时间
+              // Get recommended times for specified date
               final slots = await provider.getRecommendedSlots(
                 task,
                 _scheduledDate!,
               );
               if (slots.isNotEmpty) {
-                // 自动选择第一个推荐时间
+                // Auto-select first recommended time
                 await provider.scheduleTask(task, slots.first.startTime);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      '已将任务安排到 ${_formatTime(slots.first.startTime)}',
+                      'Task scheduled for ${_formatTime(slots.first.startTime)}', // 原来是 '已将任务安排到 ${_formatTime(slots.first.startTime)}'
                     ),
                   ),
                 );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('没有找到合适的时间段')),
+                  const SnackBar(content: Text('No suitable time slots found')), // 原来是 '没有找到合适的时间段'
                 );
               }
             },
@@ -437,7 +436,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('创建任务失败: $e'),
+          content: Text('Failed to create task: $e'), // 原来是 '创建任务失败: $e'
           backgroundColor: Colors.red,
         ),
       );
@@ -445,7 +444,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
   }
 
   String _formatTime(DateTime time) {
-    return '${time.month}月${time.day}日 '
+    return '${time.month}/${time.day} '                   // 改为美式日期格式
         '${time.hour.toString().padLeft(2, '0')}:'
         '${time.minute.toString().padLeft(2, '0')}';
   }

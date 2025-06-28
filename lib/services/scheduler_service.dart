@@ -207,26 +207,26 @@ class SchedulerService {
     final reasons = <String>[];
 
     if (score >= 90) {
-      reasons.add('完美匹配您的${block.name}');
+      reasons.add('Perfect match for your ${block.name}'); // 原来是 '完美匹配您的${block.name}'
     } else if (score >= 70) {
-      reasons.add('较好匹配${block.name}');
+      reasons.add('Good match for ${block.name}');        // 原来是 '较好匹配${block.name}'
     } else {
-      reasons.add('可用时间段');
+      reasons.add('Available time slot');                  // 原来是 '可用时间段'
     }
 
     // 能量匹配说明
     if (task.energyRequired == block.energyLevel) {
-      reasons.add('能量需求完全匹配');
+      reasons.add('Energy requirement perfectly matched'); // 原来是 '能量需求完全匹配'
     }
 
     // 专注度说明
     if (task.focusRequired == block.focusLevel) {
-      reasons.add('专注度要求匹配');
+      reasons.add('Focus level requirement matched');      // 原来是 '专注度要求匹配'
     }
 
     // 任务类型说明
     if (block.suitableCategories.contains(task.taskCategory)) {
-      reasons.add('适合${task.taskCategory.displayName}任务');
+      reasons.add('Suitable for ${task.taskCategory.displayName} tasks'); // 原来是 '适合${task.taskCategory.displayName}任务'
     }
 
     return reasons;
@@ -319,13 +319,13 @@ class SchedulerService {
       bool hasLongBlock,
       ) {
     if (blockCount > 5) {
-      return '您的时间较为分散，建议将类似任务集中安排';
+      return 'Your time is quite scattered, consider grouping similar tasks'; // 原来是 '您的时间较为分散，建议将类似任务集中安排'
     } else if (fragmentCount > 3) {
-      return '有较多碎片时间，可以用来处理简单任务';
+      return 'Multiple time fragments available for simple tasks'; // 原来是 '有较多碎片时间，可以用来处理简单任务'
     } else if (!hasLongBlock) {
-      return '缺少连续的深度工作时间，建议调整日程';
+      return 'Lacking continuous deep work time, consider adjusting schedule'; // 原来是 '缺少连续的深度工作时间，建议调整日程'
     } else {
-      return '时间安排较为合理，保持当前节奏';
+      return 'Time arrangement is reasonable, maintain current rhythm'; // 原来是 '时间安排较为合理，保持当前节奏'
     }
   }
 }
