@@ -119,8 +119,8 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
           onSoundLevelChange: (level) {
             // print('音量级别: $level');  // 注释掉避免太多日志
           },
-          listenFor: const Duration(seconds: 10),  // 监听10秒
-          pauseFor: const Duration(seconds: 3),   // 暂停3秒后停止
+          listenFor: const Duration(seconds: 30),  // 监听10秒
+          pauseFor: const Duration(seconds: 5),   // 暂停3秒后停止
         );
       }
     } else {

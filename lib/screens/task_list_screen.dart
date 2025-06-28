@@ -281,7 +281,6 @@ class _TaskListScreenState extends State<TaskListScreen>
   }
 
   void _scheduleTask(BuildContext context, Task task) {
-    // TODO: 实现任务安排界面
     showDialog(
       context: context,
       builder: (context) => _ScheduleTaskDialog(task: task),
@@ -316,7 +315,7 @@ class _TaskListScreenState extends State<TaskListScreen>
   }
 }
 
-// 临时的任务安排对话框
+// 改进的任务安排对话框
 class _ScheduleTaskDialog extends StatefulWidget {
   final Task task;
 
@@ -328,87 +327,316 @@ class _ScheduleTaskDialog extends StatefulWidget {
 
 class _ScheduleTaskDialogState extends State<_ScheduleTaskDialog> {
   DateTime _selectedDate = DateTime.now();
+  TimeOfDay? _selectedTime;
+  bool _isSmartMode = true; // true: 智能推荐, false: 手动选择
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text('安排任务: ${widget.task.title}'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text('任务时长: ${widget.task.durationDisplay}'),
-          const SizedBox(height: 16),
-
-          // 日期选择
-          ListTile(
-            leading: const Icon(Icons.calendar_today),
-            title: const Text('选择日期'),
-            subtitle: Text(
-              '${_selectedDate.year}年${_selectedDate.month}月${_selectedDate.day}日',
+      content: Container(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 任务信息
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceVariant,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.schedule, size: 16),
+                      const SizedBox(width: 8),
+                      Text('时长: ${widget.task.durationDisplay}'),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.battery_full, size: 16),
+                      const SizedBox(width: 8),
+                      Text('精力需求: ${widget.task.energyRequired.displayName}'),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            onTap: () async {
-              final date = await showDatePicker(
-                context: context,
-                initialDate: _selectedDate,
-                firstDate: DateTime.now(),
-                lastDate: widget.task.deadline ??
-                    DateTime.now().add(const Duration(days: 365)),
-              );
-              if (date != null) {
-                setState(() => _selectedDate = date);
-              }
-            },
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.of(context).pop();
+            // 模式选择
+            SegmentedButton<bool>(
+              segments: const [
+                ButtonSegment(
+                  value: true,
+                  label: Text('智能推荐'),
+                  icon: Icon(Icons.auto_awesome),
+                ),
+                ButtonSegment(
+                  value: false,
+                  label: Text('手动选择'),
+                  icon: Icon(Icons.edit_calendar),
+                ),
+              ],
+              selected: {_isSmartMode},
+              onSelectionChanged: (Set<bool> newSelection) {
+                setState(() {
+                  _isSmartMode = newSelection.first;
+                });
+              },
+            ),
+            const SizedBox(height: 16),
 
-              // 获取推荐时间
-              final provider = context.read<TaskProvider>();
-              final slots = await provider.getRecommendedSlots(
-                widget.task,
-                _selectedDate,  // 使用选择的日期
-              );
-
-              if (slots.isNotEmpty) {
-                // 显示推荐时间选择对话框
-                showDialog(
+            // 日期选择
+            ListTile(
+              leading: const Icon(Icons.calendar_today),
+              title: const Text('选择日期'),
+              subtitle: Text(
+                '${_selectedDate.year}年${_selectedDate.month}月${_selectedDate.day}日',
+              ),
+              onTap: () async {
+                final date = await showDatePicker(
                   context: context,
-                  builder: (context) => _TimeSlotSelectionDialog(
-                    task: widget.task,
-                    slots: slots,
-                    onSelect: (slot) async {
-                      await provider.scheduleTask(widget.task, slot.startTime);
-                      Navigator.of(context).pop();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            '已将任务安排到 ${_formatTime(slot.startTime)}',
-                          ),
-                        ),
+                  initialDate: _selectedDate,
+                  firstDate: DateTime.now(),
+                  lastDate: widget.task.deadline ??
+                      DateTime.now().add(const Duration(days: 365)),
+                );
+                if (date != null) {
+                  setState(() {
+                    _selectedDate = date;
+                    _selectedTime = null; // 重置时间选择
+                  });
+                }
+              },
+            ),
+
+            // 手动模式下的时间选择
+            if (!_isSmartMode) ...[
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.access_time),
+                title: const Text('选择开始时间'),
+                subtitle: Text(
+                  _selectedTime == null
+                      ? '点击选择时间'
+                      : '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}',
+                ),
+                onTap: () async {
+                  final time = await showTimePicker(
+                    context: context,
+                    initialTime: _selectedTime ?? TimeOfDay.now(),
+                    builder: (context, child) {
+                      return MediaQuery(
+                        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+                        child: child!,
                       );
                     },
+                  );
+                  if (time != null) {
+                    setState(() => _selectedTime = time);
+                  }
+                },
+              ),
+              if (_selectedTime != null) ...[
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 16,
+                          color: Theme.of(context).colorScheme.primary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '任务将从 ${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')} '
+                              '持续到 ${_calculateEndTime(_selectedTime!)}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                    ],
                   ),
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('没有找到合适的时间段')),
-                );
-              }
-            },
-            child: const Text('智能安排'),
-          ),
-        ],
+                ),
+              ],
+            ],
+          ],
+        ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('取消'),
         ),
+        ElevatedButton(
+          onPressed: (_isSmartMode || (!_isSmartMode && _selectedTime != null))
+              ? () => _handleSchedule(context)
+              : null,
+          child: Text(_isSmartMode ? '智能安排' : '确认安排'),
+        ),
       ],
     );
+  }
+
+  String _calculateEndTime(TimeOfDay startTime) {
+    final startMinutes = startTime.hour * 60 + startTime.minute;
+    final endMinutes = startMinutes + widget.task.durationMinutes;
+    final endHour = endMinutes ~/ 60;
+    final endMinute = endMinutes % 60;
+    return '${endHour.toString().padLeft(2, '0')}:${endMinute.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _handleSchedule(BuildContext context) async {
+    final provider = context.read<TaskProvider>();
+
+    if (_isSmartMode) {
+      // 智能推荐模式
+      Navigator.of(context).pop();
+
+      final slots = await provider.getRecommendedSlots(
+        widget.task,
+        _selectedDate,
+      );
+
+      if (slots.isNotEmpty) {
+        // 显示推荐时间选择对话框
+        showDialog(
+          context: context,
+          builder: (context) => _TimeSlotSelectionDialog(
+            task: widget.task,
+            slots: slots,
+            onSelect: (slot) async {
+              final success = await provider.scheduleTask(widget.task, slot.startTime);
+              Navigator.of(context).pop();
+
+              if (success) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      '已将任务安排到 ${_formatTime(slot.startTime)}',
+                    ),
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('安排失败，请重试'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+          ),
+        );
+      } else {
+        // 没有找到合适的时间段，提供手动选择
+        final shouldManual = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('未找到推荐时间'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('智能推荐未能找到最佳时间段，可能的原因：'),
+                const SizedBox(height: 8),
+                Text('• 当天已安排的任务较多',
+                    style: Theme.of(context).textTheme.bodySmall),
+                Text('• 没有匹配任务需求的时间块',
+                    style: Theme.of(context).textTheme.bodySmall),
+                Text('• 高能量时段已被占用',
+                    style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(height: 16),
+                const Text('您可以手动选择一个时间段。'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('取消'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('手动选择'),
+              ),
+            ],
+          ),
+        );
+
+        if (shouldManual == true) {
+          // 重新显示对话框，切换到手动模式
+          setState(() {
+            _isSmartMode = false;
+          });
+        }
+      }
+    } else {
+      // 手动选择模式
+      final startTime = DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+        _selectedTime!.hour,
+        _selectedTime!.minute,
+      );
+
+      // 检查时间冲突
+      final canSchedule = await provider.canScheduleTask(widget.task, startTime);
+
+      if (!canSchedule) {
+        // 显示冲突提示
+        final shouldForce = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('时间冲突'),
+            content: const Text(
+              '选择的时间段与已有任务冲突。\n'
+                  '您仍要继续安排吗？',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('重新选择'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('强制安排'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                ),
+              ),
+            ],
+          ),
+        );
+
+        if (shouldForce != true) return;
+      }
+
+      // 执行安排
+      final success = await provider.scheduleTask(widget.task, startTime);
+      Navigator.of(context).pop();
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '已将任务安排到 ${_formatTime(startTime)}',
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('安排失败，请重试'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   String _formatTime(DateTime time) {

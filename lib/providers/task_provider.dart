@@ -96,6 +96,17 @@ class TaskProvider with ChangeNotifier {
     }
   }
 
+  // 检查任务是否可以安排到指定时间（用于手动安排时的冲突检测）
+  Future<bool> canScheduleTask(Task task, DateTime startTime) async {
+    try {
+      return await _scheduler.canScheduleTask(task, startTime);
+    } catch (e) {
+      _error = '检查时间冲突失败: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
   // 删除任务
   Future<void> deleteTask(String taskId) async {
     try {
