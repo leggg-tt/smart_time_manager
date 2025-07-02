@@ -186,40 +186,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
         // 时间轴视图
         Expanded(
-          child: tasks.isEmpty
-              ? _buildEmptyState(context)
-              : _buildTimelineView(context, selectedDay, tasks, timeBlocks),
+          child: _buildTimelineView(context, selectedDay, tasks, timeBlocks),
         ),
       ],
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.event_available,
-            size: 64,
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No tasks scheduled for this day',  // 原来是 '这一天还没有安排任务'
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Tap the button below to add a task',  // 原来是 '点击右下角按钮添加任务'
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -243,16 +212,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
         }).toList();
 
         // 查找这个小时的时间块
-        final hourTimeBlock = timeBlocks.isNotEmpty
-            ? timeBlocks.firstWhere(
-              (block) {
-            final startHour = int.parse(block.startTime.split(':')[0]);
-            final endHour = int.parse(block.endTime.split(':')[0]);
-            return hour >= startHour && hour < endHour;
-          },
-          orElse: () => timeBlocks.first,
-        )
-            : null;
+        UserTimeBlock? hourTimeBlock;
+        for (final block in timeBlocks) {
+          final startHour = int.parse(block.startTime.split(':')[0]);
+          final endHour = int.parse(block.endTime.split(':')[0]);
+          if (hour >= startHour && hour < endHour) {
+            hourTimeBlock = block;
+            break;
+          }
+        }
 
         return _buildHourRow(
           context,
