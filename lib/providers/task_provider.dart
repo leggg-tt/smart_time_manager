@@ -28,7 +28,7 @@ class TaskProvider with ChangeNotifier {
       .where((task) => task.status == TaskStatus.completed)
       .toList();
 
-  // 初始化加载任务
+  // 找到这个已存在的方法
   Future<void> loadTasks() async {
     _isLoading = true;
     _error = null;
@@ -36,6 +36,36 @@ class TaskProvider with ChangeNotifier {
 
     try {
       _tasks = await _db.getAllTasks();
+
+      // 在这里添加打印语句
+      print('\n========== 数据库所有任务 ==========');
+      print('总共 ${_tasks.length} 个任务\n');
+
+      for (var i = 0; i < _tasks.length; i++) {
+        final task = _tasks[i];
+        print('【任务 ${i + 1}】');
+        print('  id: ${task.id}');
+        print('  title: ${task.title}');
+        print('  description: ${task.description}');
+        print('  status: ${task.status}');
+        print('  priority: ${task.priority}');
+        print('  durationMinutes: ${task.durationMinutes}');
+        print('  deadline: ${task.deadline}');
+        print('  scheduledStartTime: ${task.scheduledStartTime}');
+        print('  actualStartTime: ${task.actualStartTime}');
+        print('  actualEndTime: ${task.actualEndTime}');
+        print('  completedAt: ${task.completedAt}');
+        print('  energyRequired: ${task.energyRequired}');
+        print('  focusRequired: ${task.focusRequired}');
+        print('  taskCategory: ${task.taskCategory}');
+        print('  createdAt: ${task.createdAt}');
+        print('  updatedAt: ${task.updatedAt}');
+        print('  preferredTimeBlockIds: ${task.preferredTimeBlockIds}');
+        print('  avoidTimeBlockIds: ${task.avoidTimeBlockIds}');
+        print('----------------------------\n');
+      }
+      print('====================================\n');
+
       await loadTodayTasks();
     } catch (e) {
       _error = '加载任务失败: $e';

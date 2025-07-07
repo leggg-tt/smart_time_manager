@@ -10,6 +10,7 @@ import '../widgets/task_card.dart';
 import '../widgets/add_task_dialog.dart';
 import '../widgets/time_analysis_card.dart';
 import '../widgets/voice_input_dialog.dart';
+import '../widgets/task_action_menu.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});  // 添加 const 构造函数
@@ -133,7 +134,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           // 语音输入按钮
           FloatingActionButton(
             onPressed: () => _showVoiceInputDialog(context),
-            heroTag: 'voice',
+            heroTag: 'calendar_voice',
             backgroundColor: Theme.of(context).colorScheme.secondary,
             child: const Icon(Icons.mic),
             tooltip: 'Voice input',  // 原来是 '语音创建任务'
@@ -142,7 +143,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           // 普通添加按钮
           FloatingActionButton(
             onPressed: () => _showAddTaskDialog(context),
-            heroTag: 'add',
+            heroTag: 'calendar_add',
             child: const Icon(Icons.add),
             tooltip: 'Add task',  // 原来是 '添加任务'
           ),
@@ -308,7 +309,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: TaskCard(
                       task: task,
-                      onTap: () => _showTaskDetails(context, task),
+                      onTap: () => _showTaskActionMenu(context, task),
                       onStatusChanged: (status) {
                         final updatedTask = task.copyWith(status: status);
                         context.read<TaskProvider>().updateTask(updatedTask);
@@ -379,10 +380,58 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  void _showTaskDetails(BuildContext context, Task task) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Task details: ${task.title}'),  // 原来是 '任务详情: ${task.title}'
+  void _showTaskActionMenu(BuildContext context, Task task) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: TaskActionMenu(
+          task: task,
+          onEdit: () {
+            showDialog(
+              context: context,
+              builder: (context) => AddTaskDialog(
+                initialDate: task.scheduledStartTime ?? DateTime.now(),
+              ),
+            );
+          },
+          onDelete: () {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Delete Task'),
+                content: Text('Are you sure you want to delete "${task.title}"?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      context.read<TaskProvider>().deleteTask(task.id);
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Task deleted')),
+                      );
+                    },
+                    child: const Text('Delete'),
+                    style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  ),
+                ],
+              ),
+            );
+          },
+          onViewDetails: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Task: ${task.title}')),
+            );
+          },
+        ),
       ),
     );
   }

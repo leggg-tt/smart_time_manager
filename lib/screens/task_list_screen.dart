@@ -72,7 +72,7 @@ class _TaskListScreenState extends State<TaskListScreen>
           // Voice input button
           FloatingActionButton.small(
             onPressed: () => _showVoiceInputDialog(context),
-            heroTag: 'voice',
+            heroTag: 'task_list_voice',
             backgroundColor: Theme.of(context).colorScheme.secondary,
             child: const Icon(Icons.mic, size: 20),
             tooltip: 'Voice create task',
@@ -81,7 +81,7 @@ class _TaskListScreenState extends State<TaskListScreen>
           // Add task button
           FloatingActionButton(
             onPressed: () => _showAddTaskDialog(context),
-            heroTag: 'add',
+            heroTag: 'task_list_add',
             child: const Icon(Icons.add),
             tooltip: 'Add task',
           ),
