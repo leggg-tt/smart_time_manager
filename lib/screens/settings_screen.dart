@@ -4,6 +4,7 @@ import '../providers/time_block_provider.dart';
 import '../models/user_time_block.dart';
 import '../widgets/time_block_list_item.dart';
 import '../widgets/add_time_block_dialog.dart';
+import '../widgets/pomodoro_settings_dialog.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -202,6 +203,19 @@ class _GeneralSettings extends StatelessWidget {
         Card(
           child: Column(
             children: [
+              ListTile(
+                leading: const Icon(Icons.timer),
+                title: const Text('Pomodoro Timer'),
+                subtitle: const Text('Customize work and break durations'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const PomodoroSettingsDialog(),
+                  );
+                },
+              ),
+              const Divider(height: 1),
               ListTile(
                 leading: const Icon(Icons.notifications),
                 title: const Text('Task Reminders'),     // 原来是 '任务提醒'

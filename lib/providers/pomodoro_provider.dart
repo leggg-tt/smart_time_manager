@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/task.dart';
 import '../models/enums.dart';
+import '../services/pomodoro_settings_service.dart';
 import 'task_provider.dart';
 
 enum PomodoroState {
@@ -13,14 +14,18 @@ enum PomodoroState {
 }
 
 class PomodoroProvider with ChangeNotifier {
-  static const int workDuration = 25 * 60; // 25 minutes in seconds
-  static const int shortBreakDuration = 5 * 60; // 5 minutes in seconds
-  static const int longBreakDuration = 15 * 60; // 15 minutes in seconds
-  static const int pomodorosUntilLongBreak = 4;
+  // Dynamic durations with default values
+  int _workDuration = 25 * 60;  // Default 25 minutes
+  int _shortBreakDuration = 5 * 60;  // Default 5 minutes
+  int _longBreakDuration = 15 * 60;  // Default 15 minutes
+  int _pomodorosUntilLongBreak = 4;  // Default 4 pomodoros
+
+  PomodoroSettings? _currentSettings;
+  bool _isInitialized = false;
 
   Task? _currentTask;
   PomodoroState _state = PomodoroState.idle;
-  int _remainingSeconds = workDuration;
+  int _remainingSeconds = 25 * 60;  // Default work duration
   int _completedPomodoros = 0;
   int _totalWorkMinutes = 0;
   int _totalBreakMinutes = 0;
@@ -28,11 +33,57 @@ class PomodoroProvider with ChangeNotifier {
   DateTime? _sessionStartTime;
   List<DateTime> _pomodoroTimestamps = [];
 
+  PomodoroProvider() {
+    _loadSettings();
+  }
+
+  bool get isInitialized => _isInitialized;
+
+  // Load settings on initialization
+  Future<void> _loadSettings() async {
+    try {
+      _currentSettings = await PomodoroSettingsService.loadSettings();
+      _applySettings(_currentSettings!);
+      _isInitialized = true;
+      notifyListeners();
+    } catch (e) {
+      // If loading fails, use default settings
+      _currentSettings = PomodoroSettings.defaultSettings;
+      _applySettings(_currentSettings!);
+      _isInitialized = true;
+      notifyListeners();
+    }
+  }
+
+  // Apply settings
+  void _applySettings(PomodoroSettings settings) {
+    _workDuration = settings.workDuration * 60; // Convert to seconds
+    _shortBreakDuration = settings.shortBreakDuration * 60;
+    _longBreakDuration = settings.longBreakDuration * 60;
+    _pomodorosUntilLongBreak = settings.pomodorosUntilLongBreak;
+
+    // Update remaining seconds if idle
+    if (_state == PomodoroState.idle) {
+      _remainingSeconds = _workDuration;
+    }
+  }
+
+  // Update settings
+  Future<void> updateSettings(PomodoroSettings settings) async {
+    await PomodoroSettingsService.saveSettings(settings);
+    _currentSettings = settings;
+    _applySettings(settings);
+    notifyListeners();
+  }
+
   // Getters
   Task? get currentTask => _currentTask;
   PomodoroState get state => _state;
   int get remainingSeconds => _remainingSeconds;
   int get completedPomodoros => _completedPomodoros;
+  int get totalWorkMinutes => _totalWorkMinutes;
+  PomodoroSettings? get settings => _currentSettings;
+
   String get formattedTime {
     final minutes = _remainingSeconds ~/ 60;
     final seconds = _remainingSeconds % 60;
@@ -43,13 +94,13 @@ class PomodoroProvider with ChangeNotifier {
     int totalSeconds;
     switch (_state) {
       case PomodoroState.working:
-        totalSeconds = workDuration;
+        totalSeconds = _workDuration;
         break;
       case PomodoroState.shortBreak:
-        totalSeconds = shortBreakDuration;
+        totalSeconds = _shortBreakDuration;
         break;
       case PomodoroState.longBreak:
-        totalSeconds = longBreakDuration;
+        totalSeconds = _longBreakDuration;
         break;
       default:
         return 0.0;
@@ -60,26 +111,45 @@ class PomodoroProvider with ChangeNotifier {
   int get _totalSeconds {
     switch (_state) {
       case PomodoroState.working:
-        return workDuration;
+      // For working state, check if this is a partial pomodoro
+        final remainingMinutes = getRemainingWorkMinutes();
+        if (remainingMinutes > 0 && remainingMinutes < (_workDuration ~/ 60)) {
+          return remainingMinutes * 60;
+        }
+        return _workDuration;
       case PomodoroState.shortBreak:
-        return shortBreakDuration;
+        return _shortBreakDuration;
       case PomodoroState.longBreak:
-        return longBreakDuration;
+        return _longBreakDuration;
       default:
-        return workDuration;
+        return _workDuration;
     }
   }
 
-  // Calculate estimated pomodoros needed
+  // Calculate estimated pomodoros needed based on current settings
   int getEstimatedPomodoros(Task task) {
-    return (task.durationMinutes / 25).ceil();
+    final workMinutes = _currentSettings?.workDuration ?? 25;
+    return (task.durationMinutes / workMinutes).ceil();
   }
 
   // Initialize pomodoro session
   void startSession(Task task, TaskProvider taskProvider) {
+    // Wait for initialization if needed
+    if (!_isInitialized) {
+      // Use default values while loading
+      _loadSettings().then((_) {
+        _startSessionInternal(task, taskProvider);
+      });
+      return;
+    }
+
+    _startSessionInternal(task, taskProvider);
+  }
+
+  void _startSessionInternal(Task task, TaskProvider taskProvider) {
     _currentTask = task;
     _state = PomodoroState.working;
-    _remainingSeconds = workDuration;
+    _remainingSeconds = _workDuration;
     _completedPomodoros = 0;
     _totalWorkMinutes = 0;
     _totalBreakMinutes = 0;
@@ -106,7 +176,7 @@ class PomodoroProvider with ChangeNotifier {
       _state = _previousState;
     } else if (_state == PomodoroState.idle && _currentTask != null) {
       _state = PomodoroState.working;
-      _remainingSeconds = workDuration;
+      _remainingSeconds = _workDuration;
     }
     _startTimer();
     notifyListeners();
@@ -183,17 +253,27 @@ class PomodoroProvider with ChangeNotifier {
 
     switch (_state) {
       case PomodoroState.working:
+      // Calculate actual minutes worked in this pomodoro
+        final actualMinutesThisPomodoro = _getLastPomodoroMinutes();
         _completedPomodoros++;
-        _totalWorkMinutes += 25;
+        _totalWorkMinutes += actualMinutesThisPomodoro;
         _pomodoroTimestamps.add(DateTime.now());
 
-        // Determine break type
-        if (_completedPomodoros % pomodorosUntilLongBreak == 0) {
-          _state = PomodoroState.longBreak;
-          _remainingSeconds = longBreakDuration;
+        // Check if task is completed
+        if (_isTaskTimeCompleted()) {
+          // Task time is completed, show completion option
+          _state = PomodoroState.idle;
+          _showTaskCompletionNotification();
         } else {
-          _state = PomodoroState.shortBreak;
-          _remainingSeconds = shortBreakDuration;
+          // Determine break type
+          if (_completedPomodoros % _pomodorosUntilLongBreak == 0) {
+            _state = PomodoroState.longBreak;
+            _remainingSeconds = _longBreakDuration;
+          } else {
+            _state = PomodoroState.shortBreak;
+            _remainingSeconds = _shortBreakDuration;
+          }
+          _startTimer(); // Start timer for break
         }
 
         // TODO: Show notification
@@ -201,12 +281,12 @@ class PomodoroProvider with ChangeNotifier {
         break;
 
       case PomodoroState.shortBreak:
-        _totalBreakMinutes += 5;
+        _totalBreakMinutes += (_shortBreakDuration ~/ 60);
         _startNewPomodoro();
         break;
 
       case PomodoroState.longBreak:
-        _totalBreakMinutes += 15;
+        _totalBreakMinutes += (_longBreakDuration ~/ 60);
         _startNewPomodoro();
         break;
 
@@ -217,17 +297,60 @@ class PomodoroProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Get actual minutes worked in the last pomodoro
+  int _getLastPomodoroMinutes() {
+    if (_currentTask == null) return _workDuration ~/ 60;
+
+    final workMinutes = _currentSettings?.workDuration ?? 25;
+
+    // Calculate how many minutes were already worked before this pomodoro
+    final minutesBeforeThisPomodoro = (_completedPomodoros) * workMinutes;
+
+    // If this would exceed task duration, return only the remaining minutes
+    if (minutesBeforeThisPomodoro + workMinutes > _currentTask!.durationMinutes) {
+      return _currentTask!.durationMinutes - minutesBeforeThisPomodoro;
+    }
+
+    return workMinutes;
+  }
+
+  // Check if task time is completed
+  bool _isTaskTimeCompleted() {
+    if (_currentTask == null) return false;
+    return _totalWorkMinutes >= _currentTask!.durationMinutes;
+  }
+
+  // Get remaining work time
+  int getRemainingWorkMinutes() {
+    if (_currentTask == null) return 0;
+    return (_currentTask!.durationMinutes - _totalWorkMinutes).clamp(0, _workDuration ~/ 60);
+  }
+
+  // Start new pomodoro with adjusted duration
   void _startNewPomodoro() {
-    _state = PomodoroState.working;
-    _remainingSeconds = workDuration;
-    _startTimer();
+    final remainingMinutes = getRemainingWorkMinutes();
+
+    if (remainingMinutes <= 0) {
+      // Task completed
+      _state = PomodoroState.idle;
+      _showTaskCompletionNotification();
+    } else {
+      _state = PomodoroState.working;
+      // If remaining time is less than work duration, use that instead
+      _remainingSeconds = remainingMinutes < (_workDuration ~/ 60) ? remainingMinutes * 60 : _workDuration;
+      _startTimer();
+    }
     notifyListeners();
   }
 
   void _showCompletionNotification() {
     // TODO: Implement actual notification
-    // For now, this is a placeholder
     debugPrint('Pomodoro completed! Time for a break.');
+  }
+
+  void _showTaskCompletionNotification() {
+    // TODO: Implement actual notification
+    debugPrint('Task time completed! You can mark it as done.');
   }
 
   @override

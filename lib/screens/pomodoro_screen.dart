@@ -94,6 +94,8 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
 
   Widget _buildTaskInfo(PomodoroProvider provider) {
     final estimatedPomodoros = provider.getEstimatedPomodoros(widget.task);
+    final remainingMinutes = provider.getRemainingWorkMinutes();
+    final workDuration = provider.settings?.workDuration ?? 25;
 
     return Card(
       child: Padding(
@@ -107,11 +109,22 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Estimated: $estimatedPomodoros pomodoros',
+              'Duration: ${widget.task.durationMinutes} minutes (≈$estimatedPomodoros × ${workDuration}min)',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
               ),
             ),
+            if (remainingMinutes > 0 && remainingMinutes < workDuration &&
+                provider.state == PomodoroState.working) ...[
+              const SizedBox(height: 4),
+              Text(
+                'This pomodoro: $remainingMinutes minutes',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
             if (provider.state == PomodoroState.shortBreak ||
                 provider.state == PomodoroState.longBreak) ...[
               const SizedBox(height: 16),
@@ -206,6 +219,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
 
   Widget _buildProgressIndicator(PomodoroProvider provider) {
     final estimatedPomodoros = provider.getEstimatedPomodoros(widget.task);
+    final isTaskTimeCompleted = provider.totalWorkMinutes >= widget.task.durationMinutes;
 
     return Column(
       children: [
@@ -219,6 +233,14 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
               style: Theme.of(context).textTheme.titleSmall,
             ),
           ],
+        ),
+        const SizedBox(height: 8),
+        // Show actual work minutes
+        Text(
+          'Work time: ${provider.totalWorkMinutes}/${widget.task.durationMinutes} minutes',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),
+          ),
         ),
         const SizedBox(height: 8),
         Row(
@@ -238,7 +260,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        if (provider.completedPomodoros >= estimatedPomodoros)
+        if (isTaskTimeCompleted || provider.state == PomodoroState.idle && provider.completedPomodoros > 0)
           ElevatedButton.icon(
             onPressed: () => _completeTask(provider),
             icon: const Icon(Icons.check_circle),
