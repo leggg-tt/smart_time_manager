@@ -1,7 +1,9 @@
 import '../models/task.dart';
 import '../models/user_time_block.dart';
 import '../models/enums.dart';
+import '../models/scheduler_preferences.dart';
 import 'database_service.dart';
+import 'scheduler_preferences_service.dart';
 
 class TimeSlot {
   final DateTime startTime;
@@ -23,12 +25,23 @@ class TimeSlot {
 
 class SchedulerService {
   final DatabaseService _db = DatabaseService.instance;
+  SchedulerPreferences? _preferences;
+
+  // Initialize preferences
+  Future<void> _ensurePreferences() async {
+    // 每次都重新加载，确保使用最新的设置
+    _preferences = await SchedulerPreferencesService.loadPreferences();
+    print('Loaded preferences - Energy weight: ${_preferences?.energyMatchWeight}');
+  }
 
   // 为任务推荐时间段
   Future<List<TimeSlot>> recommendTimeSlots(
       Task task,
       DateTime targetDate,
       ) async {
+    // Ensure preferences are loaded
+    await _ensurePreferences();
+
     // 1. 获取目标日期是星期几
     final dayOfWeek = targetDate.weekday;
 
@@ -97,8 +110,9 @@ class SchedulerService {
         ));
       }
 
-      // 移动到下一个时间段（15分钟间隔）
-      currentStart = currentStart.add(const Duration(minutes: 15));
+      // 移动到下一个时间段（基于最小休息时间设置）
+      final minBreak = _preferences?.minBreakBetweenTasks ?? 5;
+      currentStart = currentStart.add(Duration(minutes: minBreak));
     }
 
     return slots;
@@ -143,56 +157,60 @@ class SchedulerService {
       UserTimeBlock block,
       DateTime proposedStart,
       ) {
+    final prefs = _preferences ?? SchedulerPreferences.defaultPreferences;
     double score = 0;
 
-    // 1. 能量匹配度（25分）
+    // 1. 能量匹配度（基于权重）
     if (task.energyRequired == block.energyLevel) {
-      score += 25;
+      score += prefs.energyMatchWeight;
     } else if (block.energyLevel.value > task.energyRequired.value) {
-      score += 15; // 向下兼容
+      score += prefs.energyMatchWeight * 0.6; // 向下兼容 60% 分数
     }
 
-    // 2. 专注度匹配（25分）
+    // 2. 专注度匹配（基于权重）
     if (task.focusRequired == block.focusLevel) {
-      score += 25;
+      score += prefs.focusMatchWeight;
     } else if (block.focusLevel.value > task.focusRequired.value) {
-      score += 10; // 过度满足
+      score += prefs.focusMatchWeight * 0.4; // 过度满足 40% 分数
     }
 
-    // 3. 任务类型匹配（25分）
+    // 3. 任务类型匹配（基于权重）
     if (block.suitableCategories.contains(task.taskCategory)) {
-      score += 25;
+      score += prefs.categoryMatchWeight;
     } else {
-      score += 10; // 不在列表但不冲突
+      score += prefs.categoryMatchWeight * 0.4; // 不在列表但不冲突 40% 分数
     }
 
-    // 4. 优先级匹配（25分）
+    // 4. 优先级匹配（基于权重）
     if (block.suitablePriorities.contains(task.priority)) {
       if (task.priority == Priority.high &&
           block.energyLevel == EnergyLevel.high) {
-        score += 25; // 高优先级 + 黄金时间
+        score += prefs.priorityMatchWeight; // 高优先级 + 黄金时间
       } else {
-        score += 15; // 一般匹配
+        score += prefs.priorityMatchWeight * 0.6; // 一般匹配 60% 分数
       }
     } else if (task.priority == Priority.low &&
         block.energyLevel == EnergyLevel.high) {
-      score += 5; // 避免浪费
+      score += prefs.priorityMatchWeight * 0.2; // 避免浪费 20% 分数
     } else {
-      score += 10;
+      score += prefs.priorityMatchWeight * 0.4; // 默认 40% 分数
     }
 
-    // 5. 加分项
-    // 时间利用率
+    // 5. 时间利用率（基于权重）
     final blockDuration = block.durationMinutes;
     final taskDuration = task.durationMinutes;
     final waste = blockDuration - taskDuration;
     if (waste >= 0 && waste <= 15) {
-      score += 5; // 时间利用率高
+      score += prefs.timeUtilizationWeight; // 时间利用率高
+    } else if (waste > 15 && waste <= 30) {
+      score += prefs.timeUtilizationWeight * 0.5; // 中等利用率
     }
 
-    // 早晨加分（如果是高优先级任务）
-    if (task.priority == Priority.high && proposedStart.hour < 12) {
-      score += 5;
+    // 6. 早晨加分（如果是高优先级任务）
+    if (prefs.preferMorningForHighPriority &&
+        task.priority == Priority.high &&
+        proposedStart.hour < 12) {
+      score += prefs.morningBoostWeight;
     }
 
     return score;

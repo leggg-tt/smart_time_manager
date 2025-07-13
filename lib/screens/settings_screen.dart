@@ -5,6 +5,7 @@ import '../models/user_time_block.dart';
 import '../widgets/time_block_list_item.dart';
 import '../widgets/add_time_block_dialog.dart';
 import '../widgets/pomodoro_settings_dialog.dart';
+import '../widgets/scheduler_preferences_dialog.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -212,6 +213,19 @@ class _GeneralSettings extends StatelessWidget {
                   showDialog(
                     context: context,
                     builder: (context) => const PomodoroSettingsDialog(),
+                  );
+                },
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.auto_awesome),
+                title: const Text('Scheduling Algorithm'),
+                subtitle: const Text('Adjust how tasks are automatically scheduled'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const SchedulerPreferencesDialog(),
                   );
                 },
               ),
