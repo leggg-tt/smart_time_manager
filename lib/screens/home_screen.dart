@@ -4,29 +4,33 @@ import '../providers/task_provider.dart';
 import '../providers/time_block_provider.dart';
 import 'calendar_screen.dart';
 import 'task_list_screen.dart';
+import 'analytics_screen.dart';  // 新增
 import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});  // 添加 const 构造函数
+  const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();  // 使用 State<HomeScreen>
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
-  // 这些列表移到 build 方法内或者改为 getter
+  // 更新页面列表，添加AnalyticsScreen
   List<Widget> get _screens => [
-    const CalendarScreen(),  // 如果这些 Screen 支持 const，也加上
+    const CalendarScreen(),
     const TaskListScreen(),
+    const AnalyticsScreen(),  // 新增
     const SettingsScreen(),
   ];
 
+  // 更新标题列表
   final List<String> _titles = const [
-    'Calendar View',  // 原来是 '日历视图'
-    'Task List',      // 原来是 '任务列表'
-    'Settings',       // 原来是 '设置'
+    'Calendar View',
+    'Task List',
+    'Analytics',  // 新增
+    'Settings',
   ];
 
   @override
@@ -61,17 +65,22 @@ class _HomeScreenState extends State<HomeScreen> {
           NavigationDestination(
             icon: Icon(Icons.calendar_today),
             selectedIcon: Icon(Icons.calendar_today, color: Colors.blue),
-            label: 'Calendar',  // 原来是 '日历'
+            label: 'Calendar',
           ),
           NavigationDestination(
             icon: Icon(Icons.list),
             selectedIcon: Icon(Icons.list, color: Colors.blue),
-            label: 'Tasks',     // 原来是 '任务'
+            label: 'Tasks',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.analytics),  // 新增
+            selectedIcon: Icon(Icons.analytics, color: Colors.blue),
+            label: 'Analytics',
           ),
           NavigationDestination(
             icon: Icon(Icons.settings),
             selectedIcon: Icon(Icons.settings, color: Colors.blue),
-            label: 'Settings',  // 原来是 '设置'
+            label: 'Settings',
           ),
         ],
       ),
