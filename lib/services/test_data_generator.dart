@@ -8,58 +8,47 @@ class TestDataGenerator {
   final DatabaseService _db = DatabaseService.instance;
   final Random _random = Random();
 
-  // Task titles for different categories
+  // 任务标题，按类别分组 - 添加标记便于识别
   final Map<TaskCategory, List<String>> _taskTitles = {
     TaskCategory.creative: [
-      'Design new app UI',
-      'Create marketing materials',
-      'Write blog post',
-      'Brainstorm product features',
-      'Design logo concepts',
-      'Create presentation slides',
-      'Develop brand guidelines',
-      'Sketch wireframes',
+      '[TEST] Design new app UI',
+      '[TEST] Create marketing materials',
+      '[TEST] Write blog post',
+      '[TEST] Brainstorm product features',
+      '[TEST] Design logo concepts',
     ],
     TaskCategory.analytical: [
-      'Analyze user data',
-      'Review quarterly reports',
-      'Research market trends',
-      'Optimize database queries',
-      'Performance analysis',
-      'Budget planning',
-      'Risk assessment',
-      'Data visualization',
+      '[TEST] Analyze user data',
+      '[TEST] Review quarterly reports',
+      '[TEST] Research market trends',
+      '[TEST] Performance analysis',
+      '[TEST] Budget planning',
     ],
     TaskCategory.routine: [
-      'Check emails',
-      'Update project status',
-      'File documents',
-      'Organize workspace',
-      'Backup data',
-      'Review calendar',
-      'Update task list',
-      'Clean inbox',
+      '[TEST] Check emails',
+      '[TEST] Update project status',
+      '[TEST] File documents',
+      '[TEST] Review calendar',
+      '[TEST] Clean inbox',
     ],
     TaskCategory.communication: [
-      'Team meeting',
-      'Client call',
-      'One-on-one with manager',
-      'Project sync',
-      'Stakeholder update',
-      'Interview candidate',
-      'Department standup',
-      'Vendor negotiation',
+      '[TEST] Team meeting',
+      '[TEST] Client call',
+      '[TEST] One-on-one',
+      '[TEST] Project sync',
+      '[TEST] Department standup',
     ],
   };
 
-  // Generate test data for the past N days
+  // 生成测试数据 - 优化默认参数
   Future<void> generateTestData({
-    int daysBack = 30,
-    int tasksPerDay = 5,
+    int daysBack = 7,          // 默认改为7天
+    int tasksPerDay = 3,       // 默认改为每天3个任务
     double completionRate = 0.75,
     bool includePomodoros = true,
+    bool useRealisticPatterns = true,  // 新增：使用真实模式
   }) async {
-    print('Starting test data generation...');
+    print('开始生成测试数据...');
 
     final endDate = DateTime.now();
     final startDate = endDate.subtract(Duration(days: daysBack));
@@ -67,59 +56,82 @@ class TestDataGenerator {
     int totalTasksCreated = 0;
     int totalTasksCompleted = 0;
 
-    // Generate tasks for each day
+    // 为每天生成任务
     for (int dayOffset = 0; dayOffset < daysBack; dayOffset++) {
       final currentDate = startDate.add(Duration(days: dayOffset));
 
-      // Skip weekends if desired
+      // 跳过周末
       if (currentDate.weekday == 6 || currentDate.weekday == 7) {
-        continue; // Skip Saturday and Sunday
+        continue;
       }
 
-      // Get time blocks for this day
+      // 使用真实模式时，每天的任务数量有变化
+      int dayTaskCount = tasksPerDay;
+      if (useRealisticPatterns) {
+        // 周一和周五任务较多，周三较少
+        if (currentDate.weekday == 1 || currentDate.weekday == 5) {
+          dayTaskCount = tasksPerDay + _random.nextInt(2);
+        } else if (currentDate.weekday == 3) {
+          dayTaskCount = max(1, tasksPerDay - 1);
+        }
+      }
+
+      // 获取当天的时间块
       final timeBlocks = await _db.getTimeBlocksByDay(currentDate.weekday);
 
-      // Generate tasks for this day
-      final dayTaskCount = _random.nextInt(3) + tasksPerDay - 1; // Some variation
-
+      // 生成当天的任务
       for (int i = 0; i < dayTaskCount; i++) {
         Task task = _generateRandomTask(currentDate, timeBlocks);
 
-        // Decide if task should be completed based on completion rate
+        // 决定任务是否应该完成
         final shouldComplete = _random.nextDouble() < completionRate;
 
-        if (shouldComplete && currentDate.isBefore(endDate)) {
-          final completedAt = task.scheduledStartTime?.add(
-            Duration(minutes: task.durationMinutes + _random.nextInt(30)),
-          );
+        if (shouldComplete && currentDate.isBefore(DateTime.now())) {
+          // 设置实际开始时间（可能比计划时间早或晚）
+          final startVariance = _random.nextInt(21) - 10; // -10到+10分钟
+          final actualStart = task.scheduledStartTime != null
+              ? task.scheduledStartTime!.add(Duration(minutes: startVariance))
+              : currentDate.add(Duration(hours: 9 + i * 2));
+
+          // 实际持续时间可能与计划不同
+          final durationVariance = _random.nextInt(31) - 15; // -15到+15分钟
+          final actualDuration = task.durationMinutes + durationVariance;
+          final actualEnd = actualStart.add(Duration(minutes: actualDuration));
 
           task = task.copyWith(
             status: TaskStatus.completed,
-            completedAt: completedAt,
-            actualEndTime: completedAt,
+            actualStartTime: actualStart,    // 现在包含实际开始时间！
+            actualEndTime: actualEnd,         // 实际结束时间
+            completedAt: actualEnd,
           );
 
-          // Add pomodoro data for some completed tasks
+          // 添加番茄钟数据
           if (includePomodoros && _random.nextDouble() < 0.6) {
-            final pomodoroCount = (task.durationMinutes / 25).ceil();
-            final completedPomodoros = _random.nextInt(pomodoroCount) + 1;
+            final pomodoroCount = (actualDuration / 25).ceil();
+            final completedPomodoros = max(1, pomodoroCount - _random.nextInt(2));
             final workMinutes = completedPomodoros * 25;
 
             final pomodoroDescription = (task.description ?? '') +
-                '\n---\n[Pomodoro: $completedPomodoros completed, Total work: $workMinutes min]';
+                '\n[Pomodoro: $completedPomodoros completed, Total work: $workMinutes min]';
 
             task = task.copyWith(description: pomodoroDescription);
           }
 
           totalTasksCompleted++;
         } else if (currentDate.isAfter(DateTime.now())) {
-          // Future tasks remain scheduled
+          // 未来的任务保持已安排状态
           task = task.copyWith(status: TaskStatus.scheduled);
         } else if (_random.nextDouble() < 0.3) {
-          // Some past tasks remain pending
+          // 一些过去的任务保持待办状态
           task = task.copyWith(
             status: TaskStatus.pending,
             scheduledStartTime: null,
+          );
+        } else {
+          // 过去未完成的任务
+          task = task.copyWith(
+            status: TaskStatus.scheduled,
+            // 这些任务看起来像是被跳过了
           );
         }
 
@@ -128,41 +140,58 @@ class TestDataGenerator {
       }
     }
 
-    print('Test data generation completed!');
-    print('Total tasks created: $totalTasksCreated');
-    print('Total tasks completed: $totalTasksCompleted');
-    print('Completion rate: ${(totalTasksCompleted / totalTasksCreated * 100).toStringAsFixed(1)}%');
+    // 生成一些未来的任务（接下来3天）
+    for (int dayOffset = 1; dayOffset <= 3; dayOffset++) {
+      final futureDate = endDate.add(Duration(days: dayOffset));
+
+      // 跳过周末
+      if (futureDate.weekday == 6 || futureDate.weekday == 7) continue;
+
+      // 未来每天生成1-2个任务
+      final futureTaskCount = 1 + _random.nextInt(2);
+
+      for (int i = 0; i < futureTaskCount; i++) {
+        final task = _generateRandomTask(futureDate, []);
+        await _db.insertTask(task.copyWith(status: TaskStatus.scheduled));
+        totalTasksCreated++;
+      }
+    }
+
+    print('测试数据生成完成！');
+    print('创建的任务总数：$totalTasksCreated');
+    print('已完成的任务数：$totalTasksCompleted');
+    print('完成率：${(totalTasksCompleted / totalTasksCreated * 100).toStringAsFixed(1)}%');
   }
 
   Task _generateRandomTask(DateTime date, List<UserTimeBlock> timeBlocks) {
-    // Random category
+    // 随机选择类别
     final category = TaskCategory.values[_random.nextInt(TaskCategory.values.length)];
 
-    // Random title from category
+    // 从类别中随机选择标题
     final titles = _taskTitles[category]!;
     final title = titles[_random.nextInt(titles.length)];
 
-    // Random priority with weighted distribution
+    // 根据权重分配优先级
     final priorityRand = _random.nextDouble();
     final priority = priorityRand < 0.2 ? Priority.high
         : priorityRand < 0.6 ? Priority.medium
         : Priority.low;
 
-    // Duration based on category
+    // 根据类别设置持续时间
     final duration = _getRandomDuration(category);
 
-    // Energy and focus based on category and priority
+    // 根据类别和优先级设置精力和专注度
     final energyRequired = _getEnergyLevel(category, priority);
     final focusRequired = _getFocusLevel(category);
 
-    // Schedule time (pick a random time block if available)
+    // 安排时间（如果有可用的时间块）
     DateTime? scheduledTime;
     if (timeBlocks.isNotEmpty && _random.nextDouble() < 0.8) {
       final block = timeBlocks[_random.nextInt(timeBlocks.length)];
       final blockStart = _parseTimeToDateTime(date, block.startTime);
       final blockEnd = _parseTimeToDateTime(date, block.endTime);
 
-      // Random time within the block
+      // 在时间块内随机选择时间
       final blockDuration = blockEnd.difference(blockStart).inMinutes;
       if (blockDuration >= duration) {
         final maxStartOffset = blockDuration - duration;
@@ -171,14 +200,14 @@ class TestDataGenerator {
       }
     }
 
-    // If no suitable block, schedule at random time
+    // 如果没有合适的时间块，在工作时间内随机安排
     if (scheduledTime == null) {
       final hour = 8 + _random.nextInt(10); // 8 AM to 6 PM
       final minute = _random.nextInt(4) * 15; // 0, 15, 30, or 45
       scheduledTime = DateTime(date.year, date.month, date.day, hour, minute);
     }
 
-    // Add deadline for some high priority tasks
+    // 为高优先级任务添加截止日期
     DateTime? deadline;
     if (priority == Priority.high && _random.nextDouble() < 0.7) {
       deadline = date.add(Duration(days: _random.nextInt(7) + 1));
@@ -186,7 +215,9 @@ class TestDataGenerator {
 
     return Task(
       title: title,
-      description: _random.nextDouble() < 0.3 ? 'Generated test task for analytics' : null,
+      description: _random.nextDouble() < 0.3
+          ? '这是用于测试分析功能的模拟数据'
+          : null,
       durationMinutes: duration,
       priority: priority,
       energyRequired: energyRequired,
@@ -194,7 +225,6 @@ class TestDataGenerator {
       taskCategory: category,
       deadline: deadline,
       scheduledStartTime: scheduledTime,
-      actualStartTime: scheduledTime,
       status: TaskStatus.scheduled,
     );
   }
@@ -202,13 +232,13 @@ class TestDataGenerator {
   int _getRandomDuration(TaskCategory category) {
     switch (category) {
       case TaskCategory.creative:
-        return 60 + _random.nextInt(120); // 60-180 minutes
+        return 60 + _random.nextInt(60); // 60-120分钟
       case TaskCategory.analytical:
-        return 45 + _random.nextInt(90); // 45-135 minutes
+        return 45 + _random.nextInt(45); // 45-90分钟
       case TaskCategory.routine:
-        return 15 + _random.nextInt(45); // 15-60 minutes
+        return 15 + _random.nextInt(30); // 15-45分钟
       case TaskCategory.communication:
-        return 30 + _random.nextInt(60); // 30-90 minutes
+        return 30 + _random.nextInt(30); // 30-60分钟
     }
   }
 
@@ -231,8 +261,9 @@ class TestDataGenerator {
   FocusLevel _getFocusLevel(TaskCategory category) {
     switch (category) {
       case TaskCategory.creative:
-      case TaskCategory.analytical:
         return _random.nextDouble() < 0.7 ? FocusLevel.deep : FocusLevel.medium;
+      case TaskCategory.analytical:
+        return FocusLevel.deep;
       case TaskCategory.routine:
         return _random.nextDouble() < 0.7 ? FocusLevel.light : FocusLevel.medium;
       case TaskCategory.communication:
@@ -240,178 +271,30 @@ class TestDataGenerator {
     }
   }
 
+  // 修复：将 TimeOfDay 参数改为 String
   DateTime _parseTimeToDateTime(DateTime date, String timeStr) {
     final parts = timeStr.split(':');
-    return DateTime(
-      date.year,
-      date.month,
-      date.day,
-      int.parse(parts[0]),
-      int.parse(parts[1]),
+    final hour = int.parse(parts[0]);
+    final minute = int.parse(parts[1]);
+    return DateTime(date.year, date.month, date.day, hour, minute);
+  }
+
+  // 清除所有测试任务（只清除带[TEST]标记的）
+  Future<void> clearTestTasks() async {
+    final db = await _db.database;
+    // 只删除标题包含[TEST]的任务
+    await db.delete(
+      'tasks',
+      where: 'title LIKE ?',
+      whereArgs: ['%[TEST]%'],
     );
+    print('测试任务已清除');
   }
 
-  // Generate realistic patterns
-  Future<void> generateRealisticPatterns({
-    int daysBack = 30,
-  }) async {
-    print('Generating realistic task patterns...');
-
-    final endDate = DateTime.now();
-    final startDate = endDate.subtract(Duration(days: daysBack));
-
-    for (int dayOffset = 0; dayOffset < daysBack; dayOffset++) {
-      final currentDate = startDate.add(Duration(days: dayOffset));
-
-      // Skip weekends
-      if (currentDate.weekday == 6 || currentDate.weekday == 7) {
-        continue;
-      }
-
-      // Morning routine tasks (8-9 AM)
-      await _createMorningRoutine(currentDate);
-
-      // Deep work sessions (9-12 AM)
-      await _createDeepWorkSession(currentDate);
-
-      // Communication block (2-4 PM)
-      await _createCommunicationBlock(currentDate);
-
-      // End of day routine (5-6 PM)
-      await _createEndOfDayRoutine(currentDate);
-    }
-
-    print('Realistic patterns generation completed!');
-  }
-
-  Future<void> _createMorningRoutine(DateTime date) async {
-    final tasks = [
-      Task(
-        title: 'Check emails',
-        durationMinutes: 30,
-        priority: Priority.medium,
-        energyRequired: EnergyLevel.low,
-        focusRequired: FocusLevel.light,
-        taskCategory: TaskCategory.routine,
-        scheduledStartTime: DateTime(date.year, date.month, date.day, 8, 0),
-        status: date.isBefore(DateTime.now()) ? TaskStatus.completed : TaskStatus.scheduled,
-        completedAt: date.isBefore(DateTime.now())
-            ? DateTime(date.year, date.month, date.day, 8, 30)
-            : null,
-      ),
-      Task(
-        title: 'Review daily agenda',
-        durationMinutes: 15,
-        priority: Priority.medium,
-        energyRequired: EnergyLevel.low,
-        focusRequired: FocusLevel.light,
-        taskCategory: TaskCategory.routine,
-        scheduledStartTime: DateTime(date.year, date.month, date.day, 8, 30),
-        status: date.isBefore(DateTime.now()) ? TaskStatus.completed : TaskStatus.scheduled,
-        completedAt: date.isBefore(DateTime.now())
-            ? DateTime(date.year, date.month, date.day, 8, 45)
-            : null,
-      ),
-    ];
-
-    for (final task in tasks) {
-      if (_random.nextDouble() < 0.9) { // 90% completion rate for morning routine
-        await _db.insertTask(task);
-      }
-    }
-  }
-
-  Future<void> _createDeepWorkSession(DateTime date) async {
-    final deepWorkTasks = [
-      'Write project proposal',
-      'Code review',
-      'Design system architecture',
-      'Analyze quarterly metrics',
-      'Research new technologies',
-    ];
-
-    final isCompleted = date.isBefore(DateTime.now()) && _random.nextDouble() < 0.8;
-    final duration = 90 + _random.nextInt(60); // 90-150 minutes
-    final scheduledStartTime = DateTime(date.year, date.month, date.day, 9, 30);
-
-    Task task = Task(
-      title: deepWorkTasks[_random.nextInt(deepWorkTasks.length)],
-      durationMinutes: duration,
-      priority: Priority.high,
-      energyRequired: EnergyLevel.high,
-      focusRequired: FocusLevel.deep,
-      taskCategory: _random.nextDouble() < 0.5 ? TaskCategory.analytical : TaskCategory.creative,
-      scheduledStartTime: scheduledStartTime,
-      status: isCompleted ? TaskStatus.completed : TaskStatus.scheduled,
-      completedAt: isCompleted ? scheduledStartTime.add(Duration(minutes: duration)) : null,
-    );
-
-    if (isCompleted) {
-      // Add pomodoro data
-      final pomodoroCount = (task.durationMinutes / 25).ceil();
-      final completedPomodoros = pomodoroCount - _random.nextInt(2);
-      task = task.copyWith(
-        description: '[Pomodoro: $completedPomodoros completed, Total work: ${completedPomodoros * 25} min]',
-      );
-    }
-
-    await _db.insertTask(task);
-  }
-
-  Future<void> _createCommunicationBlock(DateTime date) async {
-    final meetings = [
-      'Team standup',
-      'Client meeting',
-      'Project review',
-      'One-on-one',
-      'Department sync',
-    ];
-
-    final meetingCount = 1 + _random.nextInt(2); // 1-2 meetings
-    for (int i = 0; i < meetingCount; i++) {
-      final isCompleted = date.isBefore(DateTime.now()) && _random.nextDouble() < 0.85;
-      final duration = 30 + _random.nextInt(30); // 30-60 minutes
-      final scheduledStartTime = DateTime(date.year, date.month, date.day, 14 + i, 0);
-
-      final task = Task(
-        title: meetings[_random.nextInt(meetings.length)],
-        durationMinutes: duration,
-        priority: Priority.medium,
-        energyRequired: EnergyLevel.medium,
-        focusRequired: FocusLevel.medium,
-        taskCategory: TaskCategory.communication,
-        scheduledStartTime: scheduledStartTime,
-        status: isCompleted ? TaskStatus.completed : TaskStatus.scheduled,
-        completedAt: isCompleted ? scheduledStartTime.add(Duration(minutes: duration)) : null,
-      );
-
-      await _db.insertTask(task);
-    }
-  }
-
-  Future<void> _createEndOfDayRoutine(DateTime date) async {
-    final isCompleted = date.isBefore(DateTime.now()) && _random.nextDouble() < 0.7;
-    final scheduledStartTime = DateTime(date.year, date.month, date.day, 17, 0);
-
-    final task = Task(
-      title: 'Plan tomorrow\'s tasks',
-      durationMinutes: 30,
-      priority: Priority.low,
-      energyRequired: EnergyLevel.low,
-      focusRequired: FocusLevel.light,
-      taskCategory: TaskCategory.routine,
-      scheduledStartTime: scheduledStartTime,
-      status: isCompleted ? TaskStatus.completed : TaskStatus.scheduled,
-      completedAt: isCompleted ? scheduledStartTime.add(const Duration(minutes: 30)) : null,
-    );
-
-    await _db.insertTask(task);
-  }
-
-  // Clear all tasks (useful for testing)
+  // 清除所有任务（危险操作）
   Future<void> clearAllTasks() async {
     final db = await _db.database;
     await db.delete('tasks');
-    print('All tasks cleared from database');
+    print('所有任务已清除');
   }
 }

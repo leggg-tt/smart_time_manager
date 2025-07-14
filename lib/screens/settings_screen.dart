@@ -22,8 +22,8 @@ class SettingsScreen extends StatelessWidget {
           child: AppBar(
             bottom: const TabBar(
               tabs: [
-                Tab(text: 'Time Blocks'),     // 原来是 '时间块设置'
-                Tab(text: 'General'),         // 原来是 '通用设置'
+                Tab(text: 'Time Blocks'),
+                Tab(text: 'General'),
               ],
             ),
           ),
@@ -66,7 +66,7 @@ class _TimeBlockSettings extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'About Time Blocks',            // 原来是 '关于时间块'
+                            'About Time Blocks',
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                         ],
@@ -75,7 +75,6 @@ class _TimeBlockSettings extends StatelessWidget {
                       Text(
                         'Time blocks help you define energy and focus levels for different periods. '
                             'The system uses this information to intelligently recommend task scheduling.',
-                        // 原来是 '时间块帮助您定义不同时段的能量和专注度水平，系统会根据这些信息智能推荐任务安排。'
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ],
@@ -88,13 +87,13 @@ class _TimeBlockSettings extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'My Time Blocks',                     // 原来是 '我的时间块'
+                    'My Time Blocks',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   IconButton(
                     onPressed: () => _showAddTimeBlockDialog(context),
                     icon: const Icon(Icons.add_circle_outline),
-                    tooltip: 'Add time block',            // 原来是 '添加时间块'
+                    tooltip: 'Add time block',
                   ),
                 ],
               ),
@@ -133,7 +132,7 @@ class _TimeBlockSettings extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No time blocks configured',              // 原来是 '还没有设置时间块'
+            'No time blocks configured',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             ),
@@ -142,7 +141,7 @@ class _TimeBlockSettings extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: () => _showAddTimeBlockDialog(context),
             icon: const Icon(Icons.add),
-            label: const Text('Add Time Block'),       // 原来是 '添加时间块'
+            label: const Text('Add Time Block'),
           ),
         ],
       ),
@@ -171,22 +170,22 @@ class _TimeBlockSettings extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Time Block'),         // 原来是 '删除时间块'
-        content: Text('Are you sure you want to delete "${block.name}"?'), // 原来是 '确定要删除"${block.name}"吗？'
+        title: const Text('Delete Time Block'),
+        content: Text('Are you sure you want to delete "${block.name}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),               // 原来是 '取消'
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
               provider.deleteTimeBlock(block.id);
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Time block deleted')), // 原来是 '时间块已删除'
+                const SnackBar(content: Text('Time block deleted')),
               );
             },
-            child: const Text('Delete'),               // 原来是 '删除'
+            child: const Text('Delete'),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
           ),
         ],
@@ -234,8 +233,8 @@ class _GeneralSettings extends StatelessWidget {
               const Divider(height: 1),
               ListTile(
                 leading: const Icon(Icons.notifications),
-                title: const Text('Task Reminders'),     // 原来是 '任务提醒'
-                subtitle: const Text('Remind before task starts'), // 原来是 '在任务开始前提醒'
+                title: const Text('Task Reminders'),
+                subtitle: const Text('Remind before task starts'),
                 trailing: Switch(
                   value: true,
                   onChanged: (value) {
@@ -246,8 +245,8 @@ class _GeneralSettings extends StatelessWidget {
               const Divider(height: 1),
               ListTile(
                 leading: const Icon(Icons.access_time),
-                title: const Text('Working Hours'),       // 原来是 '工作时间'
-                subtitle: const Text('9:00 AM - 6:00 PM'), // 改为12小时制
+                title: const Text('Working Hours'),
+                subtitle: const Text('9:00 AM - 6:00 PM'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   // TODO: Implement working hours settings
@@ -256,8 +255,8 @@ class _GeneralSettings extends StatelessWidget {
               const Divider(height: 1),
               ListTile(
                 leading: const Icon(Icons.restaurant),
-                title: const Text('Lunch Break'),         // 原来是 '午休时间'
-                subtitle: const Text('12:00 PM - 1:00 PM'), // 改为12小时制
+                title: const Text('Lunch Break'),
+                subtitle: const Text('12:00 PM - 1:00 PM'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   // TODO: Implement lunch break settings
@@ -272,8 +271,8 @@ class _GeneralSettings extends StatelessWidget {
             children: [
               ListTile(
                 leading: const Icon(Icons.color_lens),
-                title: const Text('Theme'),               // 原来是 '主题设置'
-                subtitle: const Text('Follow System'),    // 原来是 '跟随系统'
+                title: const Text('Theme'),
+                subtitle: const Text('Follow System'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   // TODO: Implement theme settings
@@ -282,8 +281,8 @@ class _GeneralSettings extends StatelessWidget {
               const Divider(height: 1),
               ListTile(
                 leading: const Icon(Icons.language),
-                title: const Text('Language'),            // 原来是 '语言'
-                subtitle: const Text('English'),          // 原来是 '简体中文'
+                title: const Text('Language'),
+                subtitle: const Text('English'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   // TODO: Implement language settings
@@ -298,12 +297,12 @@ class _GeneralSettings extends StatelessWidget {
             children: [
               ListTile(
                 leading: const Icon(Icons.info),
-                title: const Text('About'),               // 原来是 '关于'
+                title: const Text('About'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   showAboutDialog(
                     context: context,
-                    applicationName: 'Smart Time Manager',  // 原来是 '智能时间管理'
+                    applicationName: 'Smart Time Manager',
                     applicationVersion: '1.0.0',
                     applicationLegalese: '© 2024 Smart Time Manager',
                   );
@@ -393,18 +392,18 @@ class _GeneralSettings extends StatelessWidget {
   }
 }
 
-// Test data generator dialog
+// Test data generator dialog - 改进版
 class _TestDataGeneratorDialog extends StatefulWidget {
   @override
   State<_TestDataGeneratorDialog> createState() => _TestDataGeneratorDialogState();
 }
 
 class _TestDataGeneratorDialogState extends State<_TestDataGeneratorDialog> {
-  int _daysBack = 30;
-  int _tasksPerDay = 5;
+  int _daysBack = 7;  // 改为7天
+  int _tasksPerDay = 3;  // 改为每天3个任务
   double _completionRate = 0.75;
   bool _includePomodoros = true;
-  bool _useRealisticPatterns = false;
+  bool _useRealisticPatterns = true;  // 新增：真实模式
   bool _isGenerating = false;
 
   @override
@@ -420,15 +419,38 @@ class _TestDataGeneratorDialogState extends State<_TestDataGeneratorDialog> {
               'Configure test data generation parameters',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info, color: Colors.blue.shade700, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Test tasks will be marked with [TEST] prefix',
+                      style: TextStyle(
+                        color: Colors.blue.shade700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 16),
 
             // Days back
             Text('Days to generate: $_daysBack'),
             Slider(
               value: _daysBack.toDouble(),
-              min: 7,
-              max: 90,
-              divisions: 83,
+              min: 3,
+              max: 30,
+              divisions: 27,
               label: '$_daysBack days',
               onChanged: (value) {
                 setState(() => _daysBack = value.round());
@@ -440,8 +462,8 @@ class _TestDataGeneratorDialogState extends State<_TestDataGeneratorDialog> {
             Slider(
               value: _tasksPerDay.toDouble(),
               min: 1,
-              max: 10,
-              divisions: 9,
+              max: 7,
+              divisions: 6,
               label: '$_tasksPerDay tasks',
               onChanged: (value) {
                 setState(() => _tasksPerDay = value.round());
@@ -454,7 +476,7 @@ class _TestDataGeneratorDialogState extends State<_TestDataGeneratorDialog> {
               value: _completionRate,
               min: 0.0,
               max: 1.0,
-              divisions: 20,
+              divisions: 10,
               label: '${(_completionRate * 100).toStringAsFixed(0)}%',
               onChanged: (value) {
                 setState(() => _completionRate = value);
@@ -464,28 +486,49 @@ class _TestDataGeneratorDialogState extends State<_TestDataGeneratorDialog> {
             // Options
             SwitchListTile(
               title: const Text('Include Pomodoro data'),
-              subtitle: const Text('Add timer statistics to some tasks'),
+              subtitle: const Text('Add time tracking info to completed tasks'),
               value: _includePomodoros,
               onChanged: (value) {
                 setState(() => _includePomodoros = value);
               },
+              contentPadding: EdgeInsets.zero,
             ),
 
             SwitchListTile(
-              title: const Text('Use realistic patterns'),
-              subtitle: const Text('Generate typical daily routines'),
+              title: const Text('Realistic patterns'),
+              subtitle: const Text('Vary task count by day of week'),
               value: _useRealisticPatterns,
               onChanged: (value) {
                 setState(() => _useRealisticPatterns = value);
               },
+              contentPadding: EdgeInsets.zero,
             ),
 
-            if (_isGenerating) ...[
-              const SizedBox(height: 16),
-              const Center(child: CircularProgressIndicator()),
-              const SizedBox(height: 8),
-              const Center(child: Text('Generating tasks...')),
-            ],
+            const SizedBox(height: 8),
+
+            // 预计生成数量
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.assessment, color: Colors.grey.shade700, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Estimated: ~${_calculateEstimatedTasks()} tasks will be generated',
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -496,38 +539,58 @@ class _TestDataGeneratorDialogState extends State<_TestDataGeneratorDialog> {
         ),
         ElevatedButton(
           onPressed: _isGenerating ? null : _generateData,
-          child: const Text('Generate'),
+          child: _isGenerating
+              ? const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+              : const Text('Generate'),
         ),
       ],
     );
   }
 
+  int _calculateEstimatedTasks() {
+    // 计算工作日数量（假设5天工作制）
+    final workDays = (_daysBack * 5 / 7).round();
+    final baseTasks = workDays * _tasksPerDay;
+
+    // 如果使用真实模式，增加一些变化
+    if (_useRealisticPatterns) {
+      return baseTasks + (baseTasks * 0.1).round() + 3; // +10% 变化 + 3天未来任务
+    }
+
+    return baseTasks + 3; // + 3天未来任务
+  }
+
   Future<void> _generateData() async {
     setState(() => _isGenerating = true);
 
-    final generator = TestDataGenerator();
-
     try {
-      if (_useRealisticPatterns) {
-        await generator.generateRealisticPatterns(daysBack: _daysBack);
-      } else {
-        await generator.generateTestData(
-          daysBack: _daysBack,
-          tasksPerDay: _tasksPerDay,
-          completionRate: _completionRate,
-          includePomodoros: _includePomodoros,
-        );
-      }
+      final generator = TestDataGenerator();
+      await generator.generateTestData(
+        daysBack: _daysBack,
+        tasksPerDay: _tasksPerDay,
+        completionRate: _completionRate,
+        includePomodoros: _includePomodoros,
+        useRealisticPatterns: _useRealisticPatterns,
+      );
 
       if (mounted) {
-        // Reload tasks
+        // 重新加载任务
         context.read<TaskProvider>().loadTasks();
 
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Test data generated successfully'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: Text('Generated ~${_calculateEstimatedTasks()} test tasks'),
+            action: SnackBarAction(
+              label: 'View',
+              onPressed: () {
+                // 可以导航到任务列表页面
+              },
+            ),
           ),
         );
       }
