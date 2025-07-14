@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/time_block_provider.dart';
+import '../providers/task_provider.dart';
 import '../models/user_time_block.dart';
 import '../widgets/time_block_list_item.dart';
 import '../widgets/add_time_block_dialog.dart';
 import '../widgets/pomodoro_settings_dialog.dart';
 import '../widgets/scheduler_preferences_dialog.dart';
+import '../services/test_data_generator.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -310,7 +312,238 @@ class _GeneralSettings extends StatelessWidget {
             ],
           ),
         ),
+        // Add developer options section at the bottom
+        if (true) ...[  // You can change to kDebugMode for production
+          const SizedBox(height: 32),
+          Card(
+            color: Colors.orange.shade50,
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.developer_mode, color: Colors.orange),
+                  title: const Text(
+                    'Developer Options',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: const Text('Test data generation for development'),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.auto_awesome),
+                  title: const Text('Generate Test Data'),
+                  subtitle: const Text('Create sample tasks for testing'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _showTestDataDialog(context),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete_sweep, color: Colors.red),
+                  title: const Text('Clear All Tasks'),
+                  subtitle: const Text('Remove all tasks from database'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _showClearDataDialog(context),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
+  }
+
+  void _showTestDataDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => _TestDataGeneratorDialog(),
+    );
+  }
+
+  void _showClearDataDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear All Tasks?'),
+        content: const Text(
+          'This will permanently delete all tasks from the database. '
+              'This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final generator = TestDataGenerator();
+              await generator.clearAllTasks();
+
+              // Reload tasks
+              if (context.mounted) {
+                context.read<TaskProvider>().loadTasks();
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('All tasks cleared')),
+                );
+              }
+            },
+            child: const Text('Clear All', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Test data generator dialog
+class _TestDataGeneratorDialog extends StatefulWidget {
+  @override
+  State<_TestDataGeneratorDialog> createState() => _TestDataGeneratorDialogState();
+}
+
+class _TestDataGeneratorDialogState extends State<_TestDataGeneratorDialog> {
+  int _daysBack = 30;
+  int _tasksPerDay = 5;
+  double _completionRate = 0.75;
+  bool _includePomodoros = true;
+  bool _useRealisticPatterns = false;
+  bool _isGenerating = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Generate Test Data'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Configure test data generation parameters',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+
+            // Days back
+            Text('Days to generate: $_daysBack'),
+            Slider(
+              value: _daysBack.toDouble(),
+              min: 7,
+              max: 90,
+              divisions: 83,
+              label: '$_daysBack days',
+              onChanged: (value) {
+                setState(() => _daysBack = value.round());
+              },
+            ),
+
+            // Tasks per day
+            Text('Tasks per day: $_tasksPerDay'),
+            Slider(
+              value: _tasksPerDay.toDouble(),
+              min: 1,
+              max: 10,
+              divisions: 9,
+              label: '$_tasksPerDay tasks',
+              onChanged: (value) {
+                setState(() => _tasksPerDay = value.round());
+              },
+            ),
+
+            // Completion rate
+            Text('Completion rate: ${(_completionRate * 100).toStringAsFixed(0)}%'),
+            Slider(
+              value: _completionRate,
+              min: 0.0,
+              max: 1.0,
+              divisions: 20,
+              label: '${(_completionRate * 100).toStringAsFixed(0)}%',
+              onChanged: (value) {
+                setState(() => _completionRate = value);
+              },
+            ),
+
+            // Options
+            SwitchListTile(
+              title: const Text('Include Pomodoro data'),
+              subtitle: const Text('Add timer statistics to some tasks'),
+              value: _includePomodoros,
+              onChanged: (value) {
+                setState(() => _includePomodoros = value);
+              },
+            ),
+
+            SwitchListTile(
+              title: const Text('Use realistic patterns'),
+              subtitle: const Text('Generate typical daily routines'),
+              value: _useRealisticPatterns,
+              onChanged: (value) {
+                setState(() => _useRealisticPatterns = value);
+              },
+            ),
+
+            if (_isGenerating) ...[
+              const SizedBox(height: 16),
+              const Center(child: CircularProgressIndicator()),
+              const SizedBox(height: 8),
+              const Center(child: Text('Generating tasks...')),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isGenerating ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _isGenerating ? null : _generateData,
+          child: const Text('Generate'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _generateData() async {
+    setState(() => _isGenerating = true);
+
+    final generator = TestDataGenerator();
+
+    try {
+      if (_useRealisticPatterns) {
+        await generator.generateRealisticPatterns(daysBack: _daysBack);
+      } else {
+        await generator.generateTestData(
+          daysBack: _daysBack,
+          tasksPerDay: _tasksPerDay,
+          completionRate: _completionRate,
+          includePomodoros: _includePomodoros,
+        );
+      }
+
+      if (mounted) {
+        // Reload tasks
+        context.read<TaskProvider>().loadTasks();
+
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Test data generated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error generating data: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isGenerating = false);
+      }
+    }
   }
 }

@@ -69,7 +69,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               _buildSectionTitle('Task Completion'),
               const SizedBox(height: 8),
               SizedBox(
-                height: 220,
+                height: 150,
                 child: FutureBuilder<Map<String, dynamic>>(
                   future: _analyticsService.getTaskCompletionStats(
                     startDate: _startDate,

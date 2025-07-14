@@ -17,7 +17,6 @@ class _TaskCompletionChartState extends State<TaskCompletionChart>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _animation;
-  int touchedIndex = -1;
 
   @override
   void initState() {
@@ -49,226 +48,108 @@ class _TaskCompletionChartState extends State<TaskCompletionChart>
     final pending = total - completed;
 
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Theme.of(context).colorScheme.surface,
-              Theme.of(context).colorScheme.surface.withOpacity(0.95),
-            ],
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              // Title
-              Row(
-                children: [
-                  Icon(
-                    Icons.pie_chart,
-                    color: Theme.of(context).colorScheme.primary,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Task Completion',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Chart
-              Expanded(
-                child: Center(
-                  child: AnimatedBuilder(
-                    animation: _animation,
-                    builder: (context, child) {
-                      return SizedBox(
-                        width: 160,
-                        height: 160,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            PieChart(
-                              PieChartData(
-                                pieTouchData: PieTouchData(
-                                  touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                                    setState(() {
-                                      if (!event.isInterestedForInteractions ||
-                                          pieTouchResponse == null ||
-                                          pieTouchResponse.touchedSection == null) {
-                                        touchedIndex = -1;
-                                        return;
-                                      }
-                                      touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
-                                    });
-                                  },
-                                ),
-                                startDegreeOffset: -90,
-                                sectionsSpace: 0,
-                                centerSpaceRadius: 50,
-                                sections: _buildSections(),
-                              ),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            // 左侧：饼图
+            AnimatedBuilder(
+              animation: _animation,
+              builder: (context, child) {
+                return SizedBox(
+                  width: 80,
+                  height: 80,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      PieChart(
+                        PieChartData(
+                          startDegreeOffset: -90,
+                          sectionsSpace: 0,
+                          centerSpaceRadius: 25,
+                          sections: [
+                            PieChartSectionData(
+                              value: _animation.value,
+                              title: '',
+                              color: Theme.of(context).colorScheme.primary,
+                              radius: 15,
                             ),
-                            // Center text
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  '${_animation.value.toStringAsFixed(1)}%',
-                                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: Theme.of(context).colorScheme.primary,
-                                  ),
-                                ),
-                                Text(
-                                  'Completion Rate',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6),
-                                  ),
-                                ),
-                              ],
+                            PieChartSectionData(
+                              value: 100 - _animation.value,
+                              title: '',
+                              color: Colors.grey.shade200,
+                              radius: 15,
                             ),
                           ],
                         ),
-                      );
-                    },
+                      ),
+                      Text(
+                        '${_animation.value.toStringAsFixed(0)}%',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ),
+                );
+              },
+            ),
+            const SizedBox(width: 12),
 
-              const SizedBox(height: 20),
-
-              // Statistics
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildAnimatedStatCard(
-                      context,
-                      'Total',
-                      total,
-                      Colors.blue,
-                      Icons.assignment,
-                      0,
+            // 右侧：统计信息（简化版）
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Task Completion',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
-                    _buildAnimatedStatCard(
-                      context,
-                      'Completed',
-                      completed,
-                      Colors.green,
-                      Icons.check_circle,
-                      100,
-                    ),
-                    _buildAnimatedStatCard(
-                      context,
-                      'Pending',
-                      pending,
-                      Colors.orange,
-                      Icons.pending,
-                      200,
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildCompactStat('Total', total, Colors.blue),
+                      _buildCompactStat('Done', completed, Colors.green),
+                      _buildCompactStat('Todo', pending, Colors.orange),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  List<PieChartSectionData> _buildSections() {
-    final completionRate = _animation.value;
-    final isTouched0 = touchedIndex == 0;
-    final isTouched1 = touchedIndex == 1;
-
-    return [
-      PieChartSectionData(
-        value: completionRate,
-        title: completionRate > 10 ? '${completionRate.toStringAsFixed(0)}%' : '',
-        titleStyle: TextStyle(
-          fontSize: isTouched0 ? 14 : 12,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
-        color: Theme.of(context).colorScheme.primary,
-        radius: isTouched0 ? 30 : 25,
-        titlePositionPercentageOffset: 0.5,
-      ),
-      PieChartSectionData(
-        value: 100 - completionRate,
-        title: (100 - completionRate) > 10 ? '${(100 - completionRate).toStringAsFixed(0)}%' : '',
-        titleStyle: TextStyle(
-          fontSize: isTouched1 ? 14 : 12,
-          fontWeight: FontWeight.bold,
-          color: Colors.grey.shade600,
-        ),
-        color: Colors.grey.shade200,
-        radius: isTouched1 ? 30 : 25,
-        titlePositionPercentageOffset: 0.5,
-      ),
-    ];
-  }
-
-  Widget _buildAnimatedStatCard(
-      BuildContext context,
-      String label,
-      int value,
-      Color color,
-      IconData icon,
-      int delay,
-      ) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: Duration(milliseconds: 800 + delay),
-      curve: Curves.elasticOut,
-      builder: (context, animation, child) {
-        return Transform.scale(
-          scale: animation,
-          child: Container(
-            constraints: const BoxConstraints(minWidth: 90),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: color.withOpacity(0.3), width: 1),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, color: color, size: 20),
-                const SizedBox(height: 4),
-                Text(
-                  value.toString(),
-                  style: TextStyle(
-                    color: color,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                ),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: color.withOpacity(0.8),
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
+  Widget _buildCompactStat(String label, int value, Color color) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          value.toString(),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            color: color,
           ),
-        );
-      },
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),
+          ),
+        ),
+      ],
     );
   }
 }
