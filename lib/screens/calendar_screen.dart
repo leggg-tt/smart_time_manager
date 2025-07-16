@@ -11,6 +11,7 @@ import '../widgets/add_task_dialog.dart';
 import '../widgets/time_analysis_card.dart';
 import '../widgets/voice_input_dialog.dart';
 import '../widgets/task_action_menu.dart';
+import '../widgets/edit_task_dialog.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});  // 添加 const 构造函数
@@ -395,9 +396,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           onEdit: () {
             showDialog(
               context: context,
-              builder: (context) => AddTaskDialog(
-                initialDate: task.scheduledStartTime ?? DateTime.now(),
-              ),
+              builder: (context) => EditTaskDialog(task: task),
             );
           },
           onDelete: () {
