@@ -5,22 +5,33 @@ import '../services/database_service.dart';
 class TimeBlockProvider with ChangeNotifier {
   final DatabaseService _db = DatabaseService.instance;
 
-  List<UserTimeBlock> _timeBlocks = [];
+  List<UserTimeBlock> _allTimeBlocks = []; // 保存所有时间块（包括禁用的）
   bool _isLoading = false;
   String? _error;
 
-  List<UserTimeBlock> get timeBlocks => _timeBlocks;
+  // 获取所有时间块（包括禁用的）- 用于设置页面
+  List<UserTimeBlock> get allTimeBlocks => _allTimeBlocks;
+
+  // 获取启用的时间块 - 用于日历和调度
+  List<UserTimeBlock> get timeBlocks => _allTimeBlocks.where((block) => block.isActive).toList();
+
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  // 加载所有时间块
+  // 加载所有时间块（包括禁用的）
   Future<void> loadTimeBlocks() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      _timeBlocks = await _db.getAllTimeBlocks();
+      // 直接查询数据库，不过滤 isActive
+      final db = await _db.database;
+      final maps = await db.query(
+        'user_time_blocks',
+        orderBy: 'startTime ASC',
+      );
+      _allTimeBlocks = maps.map((map) => UserTimeBlock.fromMap(map)).toList();
     } catch (e) {
       _error = '加载时间块失败: $e';
     }
@@ -29,10 +40,10 @@ class TimeBlockProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // 获取某一天的时间块
+  // 获取某一天的时间块（只返回启用的）
   List<UserTimeBlock> getTimeBlocksForDay(int dayOfWeek) {
-    return _timeBlocks
-        .where((block) => block.daysOfWeek.contains(dayOfWeek))
+    return _allTimeBlocks
+        .where((block) => block.isActive && block.daysOfWeek.contains(dayOfWeek))
         .toList();
   }
 
@@ -40,8 +51,8 @@ class TimeBlockProvider with ChangeNotifier {
   Future<void> addTimeBlock(UserTimeBlock timeBlock) async {
     try {
       await _db.insertTimeBlock(timeBlock);
-      _timeBlocks.add(timeBlock);
-      _timeBlocks.sort((a, b) => a.startTime.compareTo(b.startTime));
+      _allTimeBlocks.add(timeBlock);
+      _allTimeBlocks.sort((a, b) => a.startTime.compareTo(b.startTime));
       notifyListeners();
     } catch (e) {
       _error = '添加时间块失败: $e';
@@ -54,10 +65,10 @@ class TimeBlockProvider with ChangeNotifier {
   Future<void> updateTimeBlock(UserTimeBlock timeBlock) async {
     try {
       await _db.updateTimeBlock(timeBlock);
-      final index = _timeBlocks.indexWhere((t) => t.id == timeBlock.id);
+      final index = _allTimeBlocks.indexWhere((t) => t.id == timeBlock.id);
       if (index != -1) {
-        _timeBlocks[index] = timeBlock;
-        _timeBlocks.sort((a, b) => a.startTime.compareTo(b.startTime));
+        _allTimeBlocks[index] = timeBlock;
+        _allTimeBlocks.sort((a, b) => a.startTime.compareTo(b.startTime));
       }
       notifyListeners();
     } catch (e) {
@@ -71,7 +82,7 @@ class TimeBlockProvider with ChangeNotifier {
   Future<void> deleteTimeBlock(String id) async {
     try {
       await _db.deleteTimeBlock(id);
-      _timeBlocks.removeWhere((block) => block.id == id);
+      _allTimeBlocks.removeWhere((block) => block.id == id);
       notifyListeners();
     } catch (e) {
       _error = '删除时间块失败: $e';
@@ -82,7 +93,7 @@ class TimeBlockProvider with ChangeNotifier {
 
   // 切换时间块启用状态
   Future<void> toggleTimeBlockActive(String id) async {
-    final block = _timeBlocks.firstWhere((b) => b.id == id);
+    final block = _allTimeBlocks.firstWhere((b) => b.id == id);
     final updatedBlock = UserTimeBlock(
       id: block.id,
       name: block.name,

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/pomodoro_provider.dart';
 import '../providers/task_provider.dart';
 import '../models/task.dart';
+import '../models/enums.dart';
 import '../widgets/pomodoro_timer.dart';
 
 class PomodoroScreen extends StatefulWidget {
@@ -37,6 +38,26 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
     super.dispose();
   }
 
+  // 处理退出时恢复任务状态
+  Future<void> _handleExit() async {
+    final taskProvider = context.read<TaskProvider>();
+    final currentTask = pomodoroProvider.currentTask;
+
+    if (currentTask != null && currentTask.status == TaskStatus.inProgress) {
+      // 恢复任务到之前的状态（已安排或待办）
+      final previousStatus = currentTask.scheduledStartTime != null
+          ? TaskStatus.scheduled
+          : TaskStatus.pending;
+
+      final updatedTask = currentTask.copyWith(
+        status: previousStatus,
+        // 保留实际开始时间，以便下次继续
+      );
+
+      await taskProvider.updateTask(updatedTask);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
@@ -44,6 +65,9 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
       child: WillPopScope(
         onWillPop: () async {
           final shouldPop = await _showExitConfirmation();
+          if (shouldPop) {
+            await _handleExit();
+          }
           return shouldPop;
         },
         child: Scaffold(
@@ -173,12 +197,16 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
         if (state == PomodoroState.working ||
             state == PomodoroState.shortBreak ||
             state == PomodoroState.longBreak) ...[
+          // 改进的 Pause 按钮样式
           ElevatedButton.icon(
             onPressed: () => provider.pause(),
             icon: const Icon(Icons.pause),
             label: const Text('Pause'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.secondary,
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              elevation: 2,
             ),
           ),
           const SizedBox(width: 16),
@@ -189,27 +217,40 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
               label: const Text('Skip Break'),
             )
           else
-            TextButton.icon(
+          // 改进的 Give Up 按钮样式，使用 OutlinedButton
+            OutlinedButton.icon(
               onPressed: () => _showAbandonConfirmation(provider),
               icon: const Icon(Icons.stop),
               label: const Text('Give Up'),
-              style: TextButton.styleFrom(
+              style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.red,
+                side: const BorderSide(color: Colors.red, width: 1.5),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
             ),
         ] else if (state == PomodoroState.paused) ...[
+          // Resume 按钮保持绿色，表示积极行动
           ElevatedButton.icon(
             onPressed: () => provider.start(),
             icon: const Icon(Icons.play_arrow),
             label: const Text('Resume'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              elevation: 2,
+            ),
           ),
           const SizedBox(width: 16),
-          TextButton.icon(
+          // Give Up 按钮保持一致的样式
+          OutlinedButton.icon(
             onPressed: () => _showAbandonConfirmation(provider),
             icon: const Icon(Icons.stop),
             label: const Text('Give Up'),
-            style: TextButton.styleFrom(
+            style: OutlinedButton.styleFrom(
               foregroundColor: Colors.red,
+              side: const BorderSide(color: Colors.red, width: 1.5),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
           ),
         ],
@@ -267,6 +308,9 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
             label: const Text('Complete Task'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              elevation: 2,
             ),
           ),
       ],
@@ -279,7 +323,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Exit Focus Timer?'),
         content: const Text(
-          'Your progress will be saved, but the timer will stop.',
+          'Your progress will be saved, but the timer will stop. The task will return to its previous status.',
         ),
         actions: [
           TextButton(
@@ -303,7 +347,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Give up current pomodoro?'),
         content: const Text(
-          'This pomodoro won\'t be counted. You can continue later.',
+          'This pomodoro won\'t be counted. The task will return to its previous status.',
         ),
         actions: [
           TextButton(
@@ -311,10 +355,16 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               provider.abandon();
               Navigator.of(context).pop();
-              Navigator.of(context).pop();
+
+              // 恢复任务状态
+              await _handleExit();
+
+              if (mounted) {
+                Navigator.of(context).pop();
+              }
             },
             child: const Text('Give Up'),
             style: TextButton.styleFrom(

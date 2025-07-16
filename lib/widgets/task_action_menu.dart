@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/task.dart';
+import '../models/enums.dart';
 import '../screens/pomodoro_screen.dart';
 
 class TaskActionMenu extends StatelessWidget {
@@ -18,6 +19,9 @@ class TaskActionMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 检查任务是否已完成
+    final isCompleted = task.status == TaskStatus.completed;
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20),
       child: Column(
@@ -54,23 +58,26 @@ class TaskActionMenu extends StatelessWidget {
           const SizedBox(height: 20),
 
           // Action items
-          _buildActionItem(
-            context,
-            icon: Icons.local_fire_department,
-            title: 'Start Task',
-            subtitle: 'Use Pomodoro Timer to focus',
-            color: Theme.of(context).colorScheme.primary,
-            onTap: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => PomodoroScreen(task: task),
-                ),
-              );
-            },
-          ),
+          // 只有未完成的任务才能启动番茄钟
+          if (!isCompleted)
+            _buildActionItem(
+              context,
+              icon: Icons.local_fire_department,
+              title: 'Start Task',
+              subtitle: 'Use Pomodoro Timer to focus',
+              color: Theme.of(context).colorScheme.primary,
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => PomodoroScreen(task: task),
+                  ),
+                );
+              },
+            ),
 
-          if (onEdit != null)
+          // 只有未完成的任务才能编辑
+          if (onEdit != null && !isCompleted)
             _buildActionItem(
               context,
               icon: Icons.edit,
@@ -83,6 +90,7 @@ class TaskActionMenu extends StatelessWidget {
               },
             ),
 
+          // 查看详情功能对所有任务都开放
           if (onViewDetails != null)
             _buildActionItem(
               context,
@@ -96,6 +104,7 @@ class TaskActionMenu extends StatelessWidget {
               },
             ),
 
+          // 删除功能对所有任务都开放
           if (onDelete != null)
             _buildActionItem(
               context,

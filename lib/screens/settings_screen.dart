@@ -46,7 +46,7 @@ class _TimeBlockSettings extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<TimeBlockProvider>(
       builder: (context, provider, child) {
-        final timeBlocks = provider.timeBlocks;
+        final timeBlocks = provider.allTimeBlocks;
 
         return Scaffold(
           body: ListView(

@@ -132,11 +132,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          // 语音输入按钮
+          // 语音输入按钮 - 修改为紫色样式
           FloatingActionButton(
             onPressed: () => _showVoiceInputDialog(context),
             heroTag: 'calendar_voice',
-            backgroundColor: Theme.of(context).colorScheme.secondary,
+            backgroundColor: Colors.purple,  // 改为紫色，与任务列表页面一致
+            foregroundColor: Colors.white,  // 确保图标是白色
             child: const Icon(Icons.mic),
             tooltip: 'Voice input',  // 原来是 '语音创建任务'
           ),

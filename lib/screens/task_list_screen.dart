@@ -38,7 +38,8 @@ class _TaskListScreenState extends State<TaskListScreen>
         builder: (context, taskProvider, child) {
           final pendingTasks = taskProvider.pendingTasks;
           final scheduledTasks = taskProvider.tasks
-              .where((t) => t.status == TaskStatus.scheduled)
+              .where((t) => t.status == TaskStatus.scheduled ||
+              t.status == TaskStatus.inProgress)
               .toList();
           final completedTasks = taskProvider.completedTasks;
 
@@ -69,11 +70,12 @@ class _TaskListScreenState extends State<TaskListScreen>
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          // Voice input button
+          // Voice input button - 修改了背景色
           FloatingActionButton.small(
             onPressed: () => _showVoiceInputDialog(context),
             heroTag: 'task_list_voice',
-            backgroundColor: Theme.of(context).colorScheme.secondary,
+            backgroundColor: Colors.purple,  // 改为紫色，更醒目
+            foregroundColor: Colors.white,  // 确保图标是白色
             child: const Icon(Icons.mic, size: 20),
             tooltip: 'Voice create task',
           ),
