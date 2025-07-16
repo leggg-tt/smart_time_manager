@@ -82,101 +82,110 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                   TextFormField(
                     controller: _descriptionController,
                     decoration: const InputDecoration(
-                      labelText: 'Description (Optional)',  // 原来是 '任务描述（可选）'
-                      hintText: 'Add more details...',      // 原来是 '添加更多细节...'
+                      labelText: 'Description (Optional)',  // 原来是 '描述（可选）'
+                      hintText: 'Add any notes about this task...', // 原来是 '添加关于此任务的任何备注...'
                       border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.description),
+                      prefixIcon: Icon(Icons.notes),
                     ),
-                    maxLines: 2,
+                    maxLines: 3,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
-                  // Estimated duration
+                  // Duration
                   Text(
-                    'Estimated Duration',                   // 原来是 '预估时长'
+                    'Expected Duration',                     // 原来是 '预计时长'
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      for (final duration in [30, 60, 90, 120, 180, 240])
-                        ChoiceChip(
-                          label: Text(_formatDuration(duration)),
-                          selected: _durationMinutes == duration,
-                          onSelected: (selected) {
-                            if (selected) {
-                              setState(() => _durationMinutes = duration);
-                            }
-                          },
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Task properties
                   Row(
                     children: [
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Priority',                    // 原来是 '优先级'
-                              style: Theme.of(context).textTheme.titleSmall,
-                            ),
-                            const SizedBox(height: 8),
-                            SegmentedButton<Priority>(
-                              segments: const [
-                                ButtonSegment(
-                                  value: Priority.low,
-                                  label: Text('Low'),        // 原来是 '低'
-                                  icon: Icon(Icons.arrow_downward, size: 16),
-                                ),
-                                ButtonSegment(
-                                  value: Priority.medium,
-                                  label: Text('Medium'),     // 原来是 '中'
-                                  icon: Icon(Icons.remove, size: 16),
-                                ),
-                                ButtonSegment(
-                                  value: Priority.high,
-                                  label: Text('High'),       // 原来是 '高'
-                                  icon: Icon(Icons.arrow_upward, size: 16),
-                                ),
-                              ],
-                              selected: {_priority},
-                              onSelectionChanged: (value) {
-                                setState(() => _priority = value.first);
-                              },
-                            ),
-                          ],
+                        child: Slider(
+                          value: _durationMinutes.toDouble(),
+                          min: 15,
+                          max: 240,
+                          divisions: 15,
+                          label: _formatDuration(_durationMinutes),
+                          onChanged: (value) {
+                            setState(() {
+                              _durationMinutes = value.round();
+                            });
+                          },
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          _formatDuration(_durationMinutes),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
 
-                  // Energy requirement
+                  // Priority
                   Text(
-                    'Energy Required',                       // 原来是 '精力需求'
+                    'Priority',                              // 原来是 '优先级'
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  SegmentedButton<Priority>(
+                    segments: const [
+                      ButtonSegment(
+                        value: Priority.low,
+                        label: Text('Low'),                  // 原来是 '低'
+                        icon: Icon(Icons.arrow_downward, size: 16),
+                      ),
+                      ButtonSegment(
+                        value: Priority.medium,
+                        label: Text('Medium'),               // 原来是 '中'
+                        icon: Icon(Icons.remove, size: 16),
+                      ),
+                      ButtonSegment(
+                        value: Priority.high,
+                        label: Text('High'),                 // 原来是 '高'
+                        icon: Icon(Icons.arrow_upward, size: 16),
+                      ),
+                    ],
+                    selected: {_priority},
+                    onSelectionChanged: (value) {
+                      setState(() => _priority = value.first);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Energy required
+                  Text(
+                    'Energy Required',                       // 原来是 '所需能量'
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   const SizedBox(height: 8),
                   SegmentedButton<EnergyLevel>(
-                    segments: const [
+                    segments: [
                       ButtonSegment(
                         value: EnergyLevel.low,
-                        label: Text('Low'),                 // 原来是 '低'
+                        label: Text('Low'),                  // 原来是 '低'
                         icon: Icon(Icons.battery_1_bar, size: 16),
                       ),
                       ButtonSegment(
                         value: EnergyLevel.medium,
-                        label: Text('Medium'),              // 原来是 '中'
-                        icon: Icon(Icons.battery_4_bar, size: 16),
+                        label: Text('Medium'),               // 原来是 '中'
+                        icon: Icon(Icons.battery_3_bar, size: 16),
                       ),
                       ButtonSegment(
                         value: EnergyLevel.high,
-                        label: Text('High'),                // 原来是 '高'
+                        label: Text('High'),                 // 原来是 '高'
                         icon: Icon(Icons.battery_full, size: 16),
                       ),
                     ],
@@ -187,9 +196,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Focus requirement
+                  // Focus required
                   Text(
-                    'Focus Required',                        // 原来是 '专注度需求'
+                    'Focus Required',                        // 原来是 '所需专注度'
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   const SizedBox(height: 8),
@@ -197,17 +206,17 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                     segments: const [
                       ButtonSegment(
                         value: FocusLevel.light,
-                        label: Text('Light'),               // 原来是 '轻度'
-                        icon: Icon(Icons.blur_on, size: 16),
+                        label: Text('Light'),                // 原来是 '轻度'
+                        icon: Icon(Icons.panorama_fish_eye, size: 16),
                       ),
                       ButtonSegment(
                         value: FocusLevel.medium,
-                        label: Text('Medium'),              // 原来是 '中度'
-                        icon: Icon(Icons.center_focus_weak, size: 16),
+                        label: Text('Medium'),               // 原来是 '中度'
+                        icon: Icon(Icons.adjust, size: 16),
                       ),
                       ButtonSegment(
                         value: FocusLevel.deep,
-                        label: Text('Deep'),                // 原来是 '深度'
+                        label: Text('Deep'),                 // 原来是 '深度'
                         icon: Icon(Icons.center_focus_strong, size: 16),
                       ),
                     ],
@@ -254,64 +263,62 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                     leading: const Icon(Icons.event),
                     title: const Text('Deadline'),          // 原来是 '截止时间'
                     subtitle: _deadline == null
-                        ? const Text('Not set')             // 原来是 '未设置'
+                        ? const Text('No deadline')         // 原来是 '无截止时间'
                         : Text(
-                      '${_deadline!.month}/${_deadline!.day}/${_deadline!.year}', // 改为美式日期格式
+                      '${_deadline!.month}/${_deadline!.day}/${_deadline!.year}',
                     ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.calendar_today),
+                    trailing: _deadline == null
+                        ? TextButton(
                       onPressed: _selectDeadline,
+                      child: const Text('Set'),        // 原来是 '设置'
+                    )
+                        : TextButton(
+                      onPressed: () => setState(() => _deadline = null),
+                      child: const Text('Clear'),      // 原来是 '清除'
                     ),
                   ),
 
-                  // Task scheduling options
-                  const SizedBox(height: 16),
-                  Text(
-                    'Task Scheduling',                       // 原来是 '任务安排'
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: 8),
+                  // Schedule immediately option
+                  const Divider(),
                   RadioListTile<int>(
-                    contentPadding: EdgeInsets.zero,
                     title: const Text('Don\'t schedule now'), // 原来是 '暂不安排'
-                    subtitle: const Text('Schedule manually later'), // 原来是 '稍后手动安排时间'
+                    subtitle: const Text('Add to pending tasks'), // 原来是 '添加到待办任务'
                     value: 0,
                     groupValue: _scheduleOption,
                     onChanged: (value) {
                       setState(() {
                         _scheduleOption = value!;
-                        _scheduleImmediately = false;
+                        _scheduleImmediately = value == 1;
                       });
                     },
                   ),
                   RadioListTile<int>(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Specify date'),      // 原来是 '指定日期'
-                    subtitle: Text(_scheduledDate == null
-                        ? 'Choose date to schedule'          // 原来是 '选择要安排的日期'
-                        : '${_scheduledDate!.month}/${_scheduledDate!.day}/${_scheduledDate!.year}'), // 改为美式日期格式
+                    title: const Text('Auto-schedule on specific date'), // 更清晰的描述
+                    subtitle: _scheduledDate == null
+                        ? const Text('System will find the best time slot')       // 更清晰的说明
+                        : Text(
+                      'Will auto-schedule on ${_scheduledDate!.month}/${_scheduledDate!.day}', // 明确说明会自动安排
+                    ),
                     value: 1,
                     groupValue: _scheduleOption,
-                    onChanged: (value) async {
-                      setState(() => _scheduleOption = value!);
-                      if (value == 1) {
-                        await _selectScheduledDate();
-                      }
+                    onChanged: (value) {
+                      setState(() {
+                        _scheduleOption = value!;
+                        _scheduleImmediately = value == 1;
+                        if (value == 1 && _scheduledDate == null) {
+                          _selectScheduledDate();
+                        }
+                      });
                     },
-                    secondary: IconButton(
-                      icon: const Icon(Icons.calendar_today),
-                      onPressed: _scheduleOption == 1 ? _selectScheduledDate : null,
-                    ),
                   ),
-                  if (_scheduleOption == 1 && _scheduledDate != null)
-                    CheckboxListTile(
-                      contentPadding: const EdgeInsets.only(left: 56),
-                      title: const Text('Smart recommend time'), // 原来是 '智能推荐时间'
-                      subtitle: const Text('Auto-recommend optimal time slots on selected date'), // 原来是 '在选定日期自动推荐最佳时间段'
-                      value: _scheduleImmediately,
-                      onChanged: (value) {
-                        setState(() => _scheduleImmediately = value ?? false);
-                      },
+                  if (_scheduleOption == 1)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 48),
+                      child: TextButton.icon(
+                        icon: const Icon(Icons.calendar_today),
+                        label: const Text('Change Date'),   // 原来是 '更改日期'
+                        onPressed: _selectScheduledDate,
+                      ),
                     ),
                   const SizedBox(height: 24),
 
@@ -361,7 +368,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
 
-    if (date != null) {
+    if (date != null && mounted) {
       setState(() => _deadline = date);
     }
   }
@@ -374,7 +381,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       lastDate: _deadline ?? DateTime.now().add(const Duration(days: 365)),
     );
 
-    if (date != null) {
+    if (date != null && mounted) {
       setState(() => _scheduledDate = date);
     }
   }
@@ -399,44 +406,114 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       final provider = context.read<TaskProvider>();
       await provider.addTask(task);
 
-      Navigator.of(context).pop();
+      // 如果选择了自动安排到特定日期
+      if (_scheduleOption == 1 && _scheduledDate != null) {
+        if (!mounted) return;
+
+        // 显示加载对话框
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const AlertDialog(
+            content: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 16),
+                Text('Finding best time slot...'),
+              ],
+            ),
+          ),
+        );
+
+        // 获取推荐的时间段
+        final slots = await provider.getRecommendedSlots(task, _scheduledDate!);
+
+        // 关闭加载对话框
+        if (mounted) Navigator.of(context).pop();
+
+        if (slots.isNotEmpty) {
+          // 自动选择第一个推荐的时间段
+          final success = await provider.scheduleTask(task, slots.first.startTime);
+
+          if (!mounted) return;
+          Navigator.of(context).pop(); // 关闭添加任务对话框
+
+          if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Task scheduled for ${_formatTime(slots.first.startTime)}',
+                ),
+                backgroundColor: Colors.green,
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Failed to schedule task. Added to pending tasks.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+        } else {
+          // 没有找到合适的时间段
+          if (!mounted) return;
+          Navigator.of(context).pop(); // 关闭添加任务对话框
+
+          // 显示提示并询问是否手动选择
+          final result = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('No Suitable Time Found'),
+              content: Text(
+                  'Smart scheduling couldn\'t find an optimal time slot on ${_scheduledDate!.month}/${_scheduledDate!.day}.\n\n'
+                      'The task has been added to pending tasks. You can manually schedule it later.'
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('OK'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Schedule Manually'),
+                ),
+              ],
+            ),
+          );
+
+          if (result == true && mounted) {
+            // TODO: 打开手动调度对话框
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Please go to Task List to manually schedule this task.'),
+              ),
+            );
+          }
+        }
+      } else {
+        // 没有选择调度，正常关闭对话框
+        if (!mounted) return;
+        Navigator.of(context).pop();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Task "${task.title}" created and added to pending tasks'),
+          ),
+        );
+      }
+    } catch (e) {
+      // 确保关闭可能打开的加载对话框
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.of(context).pop();
+      }
+
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Task "${task.title}" created'),  // 原来是 '任务"${task.title}"已创建'
-          action: _scheduleImmediately && _scheduledDate != null
-              ? SnackBarAction(
-            label: 'View Recommendations',             // 原来是 '查看推荐'
-            onPressed: () async {
-              // Get recommended times for specified date
-              final slots = await provider.getRecommendedSlots(
-                task,
-                _scheduledDate!,
-              );
-              if (slots.isNotEmpty) {
-                // Auto-select first recommended time
-                await provider.scheduleTask(task, slots.first.startTime);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Task scheduled for ${_formatTime(slots.first.startTime)}', // 原来是 '已将任务安排到 ${_formatTime(slots.first.startTime)}'
-                    ),
-                  ),
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('No suitable time slots found')), // 原来是 '没有找到合适的时间段'
-                );
-              }
-            },
-          )
-              : null,
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to create task: $e'), // 原来是 '创建任务失败: $e'
+          content: Text('Failed to create task: $e'),
           backgroundColor: Colors.red,
         ),
       );
