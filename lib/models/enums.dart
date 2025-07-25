@@ -36,7 +36,7 @@ enum TaskCategory {
   communication  // 沟通协作
 }
 
-// 扩展方法：获取英文显示名称
+// 扩展方法：获取英文显示名称,方便UI的显示
 extension PriorityExtension on Priority {
   String get displayName {
     switch (this) {
@@ -48,7 +48,7 @@ extension PriorityExtension on Priority {
         return 'High';
     }
   }
-
+// 扩展方法：数值化,方便任务排序
   int get value {
     switch (this) {
       case Priority.low:
@@ -60,7 +60,7 @@ extension PriorityExtension on Priority {
     }
   }
 }
-
+// 扩展方法：获取英文显示名称,方便UI的显示
 extension TaskCategoryExtension on TaskCategory {
   String get displayName {
     switch (this) {
@@ -74,7 +74,7 @@ extension TaskCategoryExtension on TaskCategory {
         return 'Communication';
     }
   }
-
+// 扩展方法：获取图标,方便UI的显示
   String get icon {
     switch (this) {
       case TaskCategory.creative:
@@ -88,7 +88,7 @@ extension TaskCategoryExtension on TaskCategory {
     }
   }
 }
-
+// 扩展方法：获取英文显示名称,方便UI的显示
 extension EnergyLevelExtension on EnergyLevel {
   String get displayName {
     switch (this) {
@@ -100,7 +100,7 @@ extension EnergyLevelExtension on EnergyLevel {
         return 'High';
     }
   }
-
+// 扩展方法：数值化,方便任务排序
   int get value {
     switch (this) {
       case EnergyLevel.low:
@@ -112,7 +112,7 @@ extension EnergyLevelExtension on EnergyLevel {
     }
   }
 }
-
+// 扩展方法：获取英文显示名称,方便UI的显示
 extension FocusLevelExtension on FocusLevel {
   String get displayName {
     switch (this) {
@@ -124,7 +124,7 @@ extension FocusLevelExtension on FocusLevel {
         return 'Deep';
     }
   }
-
+// 扩展方法：数值化,方便任务排序
   int get value {
     switch (this) {
       case FocusLevel.light:

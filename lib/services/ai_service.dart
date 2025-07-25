@@ -4,13 +4,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/task.dart';
 import '../models/enums.dart';
 
+// 定义AITaskParser 类
 class AITaskParser {
+  // _apiKeyPref:存储API Key的键名常量
   static const String _apiKeyPref = 'claude_api_key';
+  // 缓存的API Key,避免重复读取
   String? _apiKey;
 
   // 获取存储的 API Key
   Future<String?> getApiKey() async {
+    // 检查内存缓存_apiKey
     if (_apiKey != null) return _apiKey;
+    // 如果没有缓存,从 SharedPreferences 读取
     final prefs = await SharedPreferences.getInstance();
     _apiKey = prefs.getString(_apiKeyPref);
     return _apiKey;
@@ -18,26 +23,35 @@ class AITaskParser {
 
   // 保存 API Key
   Future<void> saveApiKey(String apiKey) async {
+    // 存储到SharedPreferences持久化
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_apiKeyPref, apiKey);
+    // 更新内存缓存
     _apiKey = apiKey;
   }
 
   // 解析语音输入并创建任务 - 支持英文
   Future<ParsedTaskData?> parseVoiceInput(String voiceText) async {
+    // 将语音转换的文本解析为结构化任务数据
     final apiKey = await getApiKey();
+    // 首先检查API Key是否有效
     if (apiKey == null || apiKey.isEmpty) {
       throw Exception('Please set Claude API Key first');
     }
 
     try {
+      // 构建API 请求
       final response = await http.post(
         Uri.parse('https://api.anthropic.com/v1/messages'),
         headers: {
+          // 指定 JSON 格式
           'Content-Type': 'application/json',
+          // 认证密钥
           'x-api-key': apiKey,
+          // API 版本
           'anthropic-version': '2023-06-01',
         },
+        // 构建请求体
         body: jsonEncode({
           'model': 'claude-3-haiku-20240307',
           'max_tokens': 1000,
@@ -89,6 +103,7 @@ Examples of voice input patterns:
         }),
       );
 
+      // 处理API响应
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final content = data['content'][0]['text'];
@@ -98,6 +113,7 @@ Examples of voice input patterns:
         if (jsonMatch != null) {
           final jsonStr = jsonMatch.group(0)!;
           final taskData = jsonDecode(jsonStr);
+          // 解析 JSON 并创建 ParsedTaskData 对象
           return ParsedTaskData.fromJson(taskData);
         }
       }
@@ -136,11 +152,14 @@ class ParsedTaskData {
     this.suggestedTime,
   });
 
+  // JSON解析方法
   factory ParsedTaskData.fromJson(Map<String, dynamic> json) {
     return ParsedTaskData(
+      // 提供默认值
       title: json['title'] ?? 'Untitled Task',
       description: json['description'],
       durationMinutes: json['durationMinutes'] ?? 60,
+      // 调用辅助方法解析枚举值
       priority: _parsePriority(json['priority']),
       energyRequired: _parseEnergyLevel(json['energyRequired']),
       focusRequired: _parseFocusLevel(json['focusRequired']),
@@ -155,6 +174,7 @@ class ParsedTaskData {
     );
   }
 
+  // 枚举解析辅助方法
   static Priority _parsePriority(String? value) {
     switch (value?.toLowerCase()) {
       case 'high':

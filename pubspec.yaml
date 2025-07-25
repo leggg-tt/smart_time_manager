@@ -44,17 +44,18 @@ dependencies:
 
   # UI组件
   table_calendar: ^3.0.9   # 日历组件
-  fl_chart: ^0.68.0
+  fl_chart: ^0.68.0        # 好看的图表
 
   # 工具类
   uuid: ^4.2.1            # 生成唯一ID
   intl: ^0.18.1           # 日期格式化
   shared_preferences: ^2.2.2  # 简单存储
   # 语音和AI功能
-  speech_to_text: ^7.0.0  # 改为 7.0.0 或更高版本
-  http: ^1.1.0
-  permission_handler: ^11.0.1
+  speech_to_text: ^7.0.0  # 语音输入功能
+  http: ^1.1.0  # 网络请求库,用于api通信
+  permission_handler: ^11.0.1   # 权限管理插件(用于控制麦克风权限)
 
+# 测试框架
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -75,7 +76,7 @@ flutter:
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
-  uses-material-design: true
+  uses-material-design: true # 使用 Material Design 图标和主题
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -1,5 +1,7 @@
+// 定义任务调度器的偏好设置类
 class SchedulerPreferences {
   // 权重配置（0-100）
+  // 权重越高系统越倾向于往这个方向安排
   final int energyMatchWeight;        // 能量匹配权重
   final int focusMatchWeight;         // 专注度匹配权重
   final int categoryMatchWeight;      // 任务类型匹配权重
@@ -13,35 +15,39 @@ class SchedulerPreferences {
   final bool groupSimilarTasks;              // 相似任务分组
   final int minBreakBetweenTasks;           // 任务间最小休息时间（分钟）
 
+  // 构造函数
   SchedulerPreferences({
+    // 前六个权重是必须的
     required this.energyMatchWeight,
     required this.focusMatchWeight,
     required this.categoryMatchWeight,
     required this.priorityMatchWeight,
     required this.timeUtilizationWeight,
     required this.morningBoostWeight,
+    //后四个行为偏好设置有默认值
     this.preferMorningForHighPriority = true,
     this.avoidFragmentation = true,
     this.groupSimilarTasks = false,
     this.minBreakBetweenTasks = 5,
   });
 
-  // 默认权重配置
+  // 默认权重配置(用户不主动选择就是这一套规则)
   static SchedulerPreferences get defaultPreferences => SchedulerPreferences(
     energyMatchWeight: 25,
     focusMatchWeight: 25,
     categoryMatchWeight: 25,
     priorityMatchWeight: 25,
-    timeUtilizationWeight: 0,  // 改为0，使总和正好100
-    morningBoostWeight: 0,      // 改为0，使总和正好100
+    timeUtilizationWeight: 0,
+    morningBoostWeight: 0,
     preferMorningForHighPriority: true,
     avoidFragmentation: true,
     groupSimilarTasks: false,
-    minBreakBetweenTasks: 15,   // 保持与原来一致
+    minBreakBetweenTasks: 15,
   );
 
-  // 预设模板
+  // 预设模板(静态map)
   static final Map<String, SchedulerPreferences> presets = {
+    // 平衡模式
     'balanced': SchedulerPreferences(
       energyMatchWeight: 25,
       focusMatchWeight: 25,
@@ -54,6 +60,7 @@ class SchedulerPreferences {
       groupSimilarTasks: false,
       minBreakBetweenTasks: 15,
     ),
+    // 能量优先模式
     'energy_focused': SchedulerPreferences(
       energyMatchWeight: 40,
       focusMatchWeight: 20,
@@ -66,6 +73,7 @@ class SchedulerPreferences {
       groupSimilarTasks: false,
       minBreakBetweenTasks: 15,
     ),
+    // 优先级优先模式
     'priority_focused': SchedulerPreferences(
       energyMatchWeight: 15,
       focusMatchWeight: 20,
@@ -78,6 +86,7 @@ class SchedulerPreferences {
       groupSimilarTasks: false,
       minBreakBetweenTasks: 15,
     ),
+    // 效率优先模式
     'efficiency_focused': SchedulerPreferences(
       energyMatchWeight: 20,
       focusMatchWeight: 20,
@@ -119,6 +128,7 @@ class SchedulerPreferences {
     );
   }
 
+  // JSON序列化方法(将对象转换为map,用于存储到数据库或SharedPreferences)
   Map<String, dynamic> toJson() => {
     'energyMatchWeight': energyMatchWeight,
     'focusMatchWeight': focusMatchWeight,
@@ -132,6 +142,7 @@ class SchedulerPreferences {
     'minBreakBetweenTasks': minBreakBetweenTasks,
   };
 
+  // 从map创建实例对象(使用??操作符提供默认值)
   factory SchedulerPreferences.fromJson(Map<String, dynamic> json) => SchedulerPreferences(
     energyMatchWeight: json['energyMatchWeight'] ?? 25,
     focusMatchWeight: json['focusMatchWeight'] ?? 25,
@@ -145,6 +156,7 @@ class SchedulerPreferences {
     minBreakBetweenTasks: json['minBreakBetweenTasks'] ?? 5,
   );
 
+  // 创建对象的副本,可选择性地修改某些字段
   SchedulerPreferences copyWith({
     int? energyMatchWeight,
     int? focusMatchWeight,

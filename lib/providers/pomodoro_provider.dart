@@ -5,12 +5,13 @@ import '../models/enums.dart';
 import '../services/pomodoro_settings_service.dart';
 import 'task_provider.dart';
 
+// 番茄钟状态枚举
 enum PomodoroState {
-  idle,
-  working,
-  shortBreak,
-  longBreak,
-  paused,
+  idle,  // 空闲状态
+  working,  // 工作中
+  shortBreak, // 短休息
+  longBreak,  // 长休息
+  paused,  // 暂停
 }
 
 class PomodoroProvider with ChangeNotifier {

@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import '../models/user_time_block.dart';
 import '../models/enums.dart';
 
+// 定义一个无状态组件,用于显示单个时间块项目
 class TimeBlockListItem extends StatelessWidget {
-  final UserTimeBlock timeBlock;
-  final VoidCallback? onTap;
-  final VoidCallback? onToggle;
-  final VoidCallback? onDelete;
+  final UserTimeBlock timeBlock;  // 时间块数据对象(必须)
+  final VoidCallback? onTap;  // 可选的点击回调函数
+  final VoidCallback? onToggle; // 可选的切换状态回调函数
+  final VoidCallback? onDelete;  // 可选的删除回调函数
 
+  // 构造函数
   const TimeBlockListItem({
     Key? key,
     required this.timeBlock,
@@ -16,21 +18,29 @@ class TimeBlockListItem extends StatelessWidget {
     this.onDelete,
   }) : super(key: key);
 
+  // 重写父类方法,构建UI
   @override
   Widget build(BuildContext context) {
+    // 将时间块颜色字符串转换为Flutter中对应的颜色对象
     final color = Color(int.parse(timeBlock.color.replaceAll('#', '0xFF')));
 
+    // 返回一个卡片组件
     return Card(
+      // 根据激活状态设置阴影(2是激活,0是未激活)
       elevation: timeBlock.isActive ? 2 : 0,
+      // 水波纹动画组件
       child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,  // 点击事件
+        borderRadius: BorderRadius.circular(12),  // 圆角12像素
+        // 根据激活状态设置透明度
         child: Opacity(
           opacity: timeBlock.isActive ? 1.0 : 0.6,
+          // 容器设置(内边距16像素)
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
+              // 左边框
               border: Border(
                 left: BorderSide(
                   color: color,
@@ -38,10 +48,11 @@ class TimeBlockListItem extends StatelessWidget {
                 ),
               ),
             ),
+            // 使用垂直列布局,子元素左对齐
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Title row
+                // 使用水平行布局,让子组件占用剩余空间
                 Row(
                   children: [
                     Expanded(
@@ -51,11 +62,13 @@ class TimeBlockListItem extends StatelessWidget {
                           Row(
                             children: [
                               Text(
-                                timeBlock.name,
+                                timeBlock.name,  // 显示时间块名称
+                                // 主题样式
                                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
+                              // 如果是默认时间块,显示默认标识
                               if (timeBlock.isDefault) ...[
                                 const SizedBox(width: 8),
                                 Container(
@@ -63,14 +76,16 @@ class TimeBlockListItem extends StatelessWidget {
                                     horizontal: 6,
                                     vertical: 2,
                                   ),
+                                  // 透明度与圆角
                                   decoration: BoxDecoration(
-                                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1), // 现版本是withValues,后面如果出问题再更改:withValues(alpha: 0.1)
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(
-                                    'Default',                  // 原来是 '默认'
+                                    'Default',
                                     style: TextStyle(
-                                      fontSize: 10,
+                                      fontSize: 10,  // 字体大小
+                                      // 颜色为主题色
                                       color: Theme.of(context).colorScheme.primary,
                                     ),
                                   ),
@@ -80,68 +95,71 @@ class TimeBlockListItem extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${timeBlock.startTime} - ${timeBlock.endTime}',
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            '${timeBlock.startTime} - ${timeBlock.endTime}',  // 显示开始时间和结束时间
+                            style: Theme.of(context).textTheme.bodyMedium,  // 使用 bodyMedium 文本样式
                           ),
                         ],
                       ),
                     ),
 
-                    // Action buttons
+                    // 激活按钮,如果提供了onToggle回调,显示开关
                     if (onToggle != null)
+                      // 绑定激活状态和切换事件
                       Switch(
                         value: timeBlock.isActive,
                         onChanged: (_) => onToggle!(),
                       ),
+                    // 只有非默认时间块才显示删除按钮
                     if (onDelete != null && !timeBlock.isDefault)
                       IconButton(
                         icon: const Icon(Icons.delete_outline),
                         onPressed: onDelete,
-                        tooltip: 'Delete',                     // 原来是 '删除'
+                        tooltip: 'Delete',
                       ),
                   ],
                 ),
 
                 const SizedBox(height: 12),
 
-                // Weekday display
+                // 星期显示,调用私有方法构建星期选择器
                 _buildWeekdayChips(context),
 
                 const SizedBox(height: 12),
 
-                // Feature tags
+                // 属性标签
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
                     _buildFeatureChip(
                       context,
-                      Icons.battery_full,
-                      'Energy: ${timeBlock.energyLevel.displayName}', // 原来是 '能量: ${timeBlock.energyLevel.displayName}'
-                      _getEnergyColor(timeBlock.energyLevel),
+                      Icons.battery_full,  // 显示电池图标
+                      'Energy: ${timeBlock.energyLevel.displayName}',  // 显示能量等级文本
+                      _getEnergyColor(timeBlock.energyLevel),  // 根据能量等级获取对应颜色
                     ),
                     _buildFeatureChip(
                       context,
-                      Icons.psychology,
-                      'Focus: ${timeBlock.focusLevel.displayName}',   // 原来是 '专注: ${timeBlock.focusLevel.displayName}'
-                      Colors.indigo,
+                      Icons.psychology,  // 显示大脑图标
+                      'Focus: ${timeBlock.focusLevel.displayName}',  // 显示专注等级文本
+                      Colors.indigo,  // 使用靛蓝色
                     ),
                   ],
                 ),
 
                 const SizedBox(height: 12),
 
-                // Suitable task types
+                // 适合的任务类型部分
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Suitable Task Types',                  // 原来是 '适合的任务类型'
+                      'Suitable Task Types',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: 4),
                     Wrap(
                       spacing: 4,
+                      // 遍历适合的任务类别
                       children: timeBlock.suitableCategories.map((category) {
                         return Chip(
                           label: Row(
@@ -155,7 +173,9 @@ class TimeBlockListItem extends StatelessWidget {
                               ),
                             ],
                           ),
+                          // 密度紧凑
                           visualDensity: VisualDensity.compact,
+                          // 最小化点击目标
                           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         );
                       }).toList(),
@@ -163,6 +183,7 @@ class TimeBlockListItem extends StatelessWidget {
                   ],
                 ),
 
+                // 如果有描述且不为空，显示描述
                 if (timeBlock.description != null && timeBlock.description!.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Text(
@@ -180,15 +201,18 @@ class TimeBlockListItem extends StatelessWidget {
     );
   }
 
+  // 自定义星期选择器
   Widget _buildWeekdayChips(BuildContext context) {
-    const weekdays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];  // 原来是 ['一', '二', '三', '四', '五', '六', '日']
+    const weekdays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];  // 之后改一下,容易让用户混淆
 
+    // 生成7个按钮,检查该天是否被选中
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: List.generate(7, (index) {
         final dayNumber = index + 1;
         final isSelected = timeBlock.daysOfWeek.contains(dayNumber);
 
+        // 圆形容器,32x32像素,选中时使用主题色,未选中使用表面变体色
         return Container(
           margin: const EdgeInsets.only(right: 4),
           width: 32,
@@ -196,9 +220,10 @@ class TimeBlockListItem extends StatelessWidget {
           decoration: BoxDecoration(
             color: isSelected
                 ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).colorScheme.surfaceVariant,
+                : Theme.of(context).colorScheme.surfaceVariant,  // 将surfaceVariant替换为 surfaceContainerHighest,但没有效果不知道为什么,可能是版本问题
             shape: BoxShape.circle,
           ),
+          // 居中显示
           child: Center(
             child: Text(
               weekdays[index],
@@ -216,6 +241,7 @@ class TimeBlockListItem extends StatelessWidget {
     );
   }
 
+  // 属性组件构建
   Widget _buildFeatureChip(
       BuildContext context,
       IconData icon,
@@ -225,9 +251,11 @@ class TimeBlockListItem extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
+        // 背景色使用传入颜色的10%透明度
+        color: color.withOpacity(0.1),  // 现版本是withValues,后面如果出问题再更改:withValues(alpha: 0.1)
+        borderRadius: BorderRadius.circular(16),  // 圆角
       ),
+      // 组件内容
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -249,6 +277,7 @@ class TimeBlockListItem extends StatelessWidget {
     );
   }
 
+  // 能量颜色映射
   Color _getEnergyColor(EnergyLevel level) {
     switch (level) {
       case EnergyLevel.high:

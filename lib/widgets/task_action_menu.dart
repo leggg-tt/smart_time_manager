@@ -3,12 +3,14 @@ import '../models/task.dart';
 import '../models/enums.dart';
 import '../screens/pomodoro_screen.dart';
 
+// 定义任务操作菜单
 class TaskActionMenu extends StatelessWidget {
-  final Task task;
-  final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
-  final VoidCallback? onViewDetails;
+  final Task task;  // 要操作的任务对象
+  final VoidCallback? onEdit;  // 可选回调,编辑任务时调用
+  final VoidCallback? onDelete;  // 可选回调,删除任务时调用
+  final VoidCallback? onViewDetails;  // 可选回调,查看详情时调用(功能还没做,不确定后面加不加)
 
+  // 构造函数
   const TaskActionMenu({
     Key? key,
     required this.task,
@@ -17,15 +19,19 @@ class TaskActionMenu extends StatelessWidget {
     this.onViewDetails,
   }) : super(key: key);
 
+  // 构建UI核心方法
   @override
   Widget build(BuildContext context) {
     // 检查任务是否已完成
     final isCompleted = task.status == TaskStatus.completed;
 
+    // 跟容器:垂直内边距20
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20),
+      // 列布局
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        // 40*4横条,灰色背景
         children: [
           // Handle bar
           Container(
@@ -33,12 +39,12 @@ class TaskActionMenu extends StatelessWidget {
             height: 4,
             decoration: BoxDecoration(
               color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: BorderRadius.circular(2),  // 圆角2像素
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 20),  // 20像素垂直间距
 
-          // Title
+          // 标题文本
           Text(
             'Task Actions',
             style: Theme.of(context).textTheme.titleLarge,
@@ -49,11 +55,11 @@ class TaskActionMenu extends StatelessWidget {
           Text(
             task.title,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),  // 现版本是withValues,后面如果出问题再更改:withValues(alpha: 0.7)
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
+            maxLines: 2,  // 最多显示两行
+            overflow: TextOverflow.ellipsis,  // 超出部分省略号
+            textAlign: TextAlign.center,  // 文本居中对齐
           ),
           const SizedBox(height: 20),
 
@@ -66,6 +72,7 @@ class TaskActionMenu extends StatelessWidget {
               title: 'Start Task',
               subtitle: 'Use Pomodoro Timer to focus',
               color: Theme.of(context).colorScheme.primary,
+              // 点击后关闭当前菜单,再导航到番茄始终界面
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).push(
@@ -120,7 +127,7 @@ class TaskActionMenu extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // Cancel button
+          // 取消按钮
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cancel'),
@@ -130,6 +137,7 @@ class TaskActionMenu extends StatelessWidget {
     );
   }
 
+  // 统一样式操作项
   Widget _buildActionItem(
       BuildContext context, {
         required IconData icon,
@@ -138,13 +146,16 @@ class TaskActionMenu extends StatelessWidget {
         required Color color,
         required VoidCallback onTap,
       }) {
+    // 使用ListTile组件
     return ListTile(
+      // 左侧图标容器
       leading: Container(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(8),  // 8像素内边距
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
+          color: color.withOpacity(0.1),  // 现版本是withValues,后面如果出问题再更改:withValues(alpha: 0.1)
+          borderRadius: BorderRadius.circular(8),  // 8像素圆角
         ),
+        // 图标使用传入的颜色
         child: Icon(icon, color: color),
       ),
       title: Text(title),

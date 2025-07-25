@@ -2,24 +2,26 @@ import 'package:uuid/uuid.dart';
 import 'dart:convert';
 import 'enums.dart';
 
+// 定义一个用户时间块类
 class UserTimeBlock {
-  final String id;
-  final String name;
-  final String startTime; // HH:mm格式
-  final String endTime;   // HH:mm格式
+  final String id;  // 唯一标识符
+  final String name;  // 时间块名称
+  final String startTime;  // HH:mm格式
+  final String endTime;  // HH:mm格式
   final List<int> daysOfWeek; // 1-7, 1=周一
-  final EnergyLevel energyLevel;
-  final FocusLevel focusLevel;
-  final List<TaskCategory> suitableCategories;
-  final List<Priority> suitablePriorities;
-  final List<EnergyLevel> suitableEnergyLevels;
-  final String? description;
-  final String color;
-  final bool isActive;
-  final bool isDefault;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final EnergyLevel energyLevel;  // 能量水平
+  final FocusLevel focusLevel;  // 专注水平
+  final List<TaskCategory> suitableCategories;  // 适合这个时间块做的任务类别
+  final List<Priority> suitablePriorities;  // 适合这个时间块处理的任务优先级
+  final List<EnergyLevel> suitableEnergyLevels;  // 适合这个时间块的能量水平
+  final String? description;  // 可选描述
+  final String color;  // 时间块颜色
+  final bool isActive;  // 是否启用
+  final bool isDefault;  // 是否是初始默认时间块
+  final DateTime createdAt;  // 创建时间
+  final DateTime updatedAt;  // 更新时间
 
+  // 构造函数
   UserTimeBlock({
     String? id,
     required this.name,
@@ -37,13 +39,14 @@ class UserTimeBlock {
     bool? isDefault,
     DateTime? createdAt,
     DateTime? updatedAt,
-  })  : id = id ?? const Uuid().v4(),
-        color = color ?? '#2196F3',
-        isActive = isActive ?? true,
-        isDefault = isDefault ?? false,
-        createdAt = createdAt ?? DateTime.now(),
-        updatedAt = updatedAt ?? DateTime.now();
+  })  : id = id ?? const Uuid().v4(),  // 自动生成UUID
+        color = color ?? '#2196F3',  // 默认蓝色
+        isActive = isActive ?? true,  // 默认启用
+        isDefault = isDefault ?? false,  // 默认非默认时间块
+        createdAt = createdAt ?? DateTime.now(),  // 默认当前时间
+        updatedAt = updatedAt ?? DateTime.now();  // 默认当前时间
 
+  // 将对象转换为 Map，用于数据库存储
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -71,6 +74,7 @@ class UserTimeBlock {
     };
   }
 
+  // 从 Map 创建对象实例
   factory UserTimeBlock.fromMap(Map<String, dynamic> map) {
     return UserTimeBlock(
       id: map['id'],
@@ -100,13 +104,14 @@ class UserTimeBlock {
 
   // 检查某个时间是否在这个时间块内
   bool containsTime(DateTime dateTime) {
+    // 检查是否在weekday的列表当中
     if (!daysOfWeek.contains(dateTime.weekday)) {
       return false;
     }
-
+    // 时间字符串构建,确保单位数补0(9变成09)
     final timeStr = '${dateTime.hour.toString().padLeft(2, '0')}:'
         '${dateTime.minute.toString().padLeft(2, '0')}';
-
+    // 时间范围比较
     return timeStr.compareTo(startTime) >= 0 &&
         timeStr.compareTo(endTime) < 0;
   }
@@ -118,7 +123,7 @@ class UserTimeBlock {
     return (end.hour * 60 + end.minute) - (start.hour * 60 + start.minute);
   }
 
-  // 解析时间字符串
+  // 解析时间字符串("14:30" → ["14", "30"])
   TimeOfDay _parseTime(String time) {
     final parts = time.split(':');
     return TimeOfDay(

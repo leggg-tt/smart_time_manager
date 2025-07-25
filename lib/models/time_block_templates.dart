@@ -1,6 +1,7 @@
 import 'user_time_block.dart';
 import 'enums.dart';
 
+// 系统默认时间块
 class TimeBlockTemplates {
   static List<UserTimeBlock> get defaultTemplates => [
     UserTimeBlock(

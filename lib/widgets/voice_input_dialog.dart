@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../services/ai_service.dart';
 import '../providers/task_provider.dart';
 
+// 定义一个有状态的VoiceInputDialog对话框组件
 class VoiceInputDialog extends StatefulWidget {
   const VoiceInputDialog({Key? key}) : super(key: key);
 
@@ -13,26 +14,31 @@ class VoiceInputDialog extends StatefulWidget {
 }
 
 class _VoiceInputDialogState extends State<VoiceInputDialog>
+    // 用于提供动画控制器所需的vsync
     with SingleTickerProviderStateMixin {
-  final stt.SpeechToText _speech = stt.SpeechToText();
-  final AITaskParser _aiParser = AITaskParser();
+  // 成员变量
+  final stt.SpeechToText _speech = stt.SpeechToText();  // 语音识别实例
+  final AITaskParser _aiParser = AITaskParser();  //  AI解析器实例,用于将自然语言转换为任务
 
-  bool _isListening = false;
-  bool _isProcessing = false;
-  String _text = '';
-  String _statusMessage = 'Tap microphone to start speaking';
+  bool _isListening = false;  // 是否正在监听语音
+  bool _isProcessing = false;  // 是否正在处理识别结果
+  String _text = '';  // 识别到的文本
+  String _statusMessage = 'Tap microphone to start speaking';  // 状态提示信息
 
   // 语言选择
-  String _selectedLocale = 'en_US';
+  String _selectedLocale = 'en_US';  // 默认选择美式英语
+  // 支持多语言识别
   final Map<String, String> _localeNames = {
     'en_US': 'English (US)',
     'en_GB': 'English (UK)',
     'cmn_CN': '中文',
   };
 
+  // 动画控制器和动画对象,用于实现麦克风图标的脉冲动画效果
   late AnimationController _animationController;
   late Animation<double> _animation;
 
+  // 初始化方法
   @override
   void initState() {
     super.initState();
@@ -41,17 +47,22 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
       vsync: this,
     );
     _animation = Tween<double>(
+      // 缩放动画,使用缓入缓出曲线
       begin: 1.0,
       end: 1.2,
     ).animate(CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeInOut,
     ));
+    // 初始化语音识别
     _initSpeech();
   }
 
+  // 语音识别初始化
   void _initSpeech() async {
+    // 请求麦克风权限
     final status = await Permission.microphone.request();
+    // 如果未授权则更新状态消息并返回
     if (status != PermissionStatus.granted) {
       if (mounted) {
         setState(() {
@@ -61,13 +72,16 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
       return;
     }
 
+    // 初始化语音识别
     bool available = await _speech.initialize(
       onStatus: (status) {
         print('Speech status: $status');
         print('Current recognized text: $_text');
         if (mounted) {
+          // 当识别状态为done且有识别文本时，自动处理语音输入
           if (status == 'done') {
             print('Status is done, text empty: ${_text.isEmpty}');
+            // 当识别为空时则出现请输入语音文本
             if (_text.isNotEmpty) {
               print('Processing voice input...');
               _processVoiceInput();
@@ -75,6 +89,7 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
           }
         }
       },
+      // 设置错误回调,打印错误信息并更新UI状态
       onError: (error) {
         print('Speech error: ${error.errorMsg}, permanent: ${error.permanent}');
         if (mounted) {
@@ -95,14 +110,17 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
     }
   }
 
+  // 语音监听方法
   void _listen() async {
     if (!_isListening) {
       bool available = await _speech.initialize();
       if (available) {
         // 获取可用的语言
         var locales = await _speech.locales();
+        // 重新初始化并获取设备支持的语言列表
         print('Available languages: ${locales.map((l) => l.localeId).toList()}');
 
+        // 更新UI状态,清空之前的文本,启动脉冲动画
         if (mounted) {
           setState(() {
             _isListening = true;
@@ -112,7 +130,9 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
         }
         _animationController.repeat(reverse: true);
 
+        // 开始语音监听,设置各种参数
         await _speech.listen(
+          // 识别结果回调,实时更新识别文本
           onResult: (result) {
             print('Recognition result: ${result.recognizedWords}, confidence: ${result.confidence}, final: ${result.finalResult}');
             if (mounted) {
@@ -122,17 +142,21 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
             }
           },
           localeId: _selectedLocale, // 使用选择的语言
-          cancelOnError: true,
-          partialResults: true,
+          cancelOnError: true,  // 出错时自动取消
+          partialResults: true,  // 启用部分结果,实时显示识别内容
           onSoundLevelChange: (level) {
             // print('Sound level: $level');
           },
-          listenFor: const Duration(seconds: 10),
+          // 最长监听时间10秒
+          listenFor: const Duration(seconds: 30),
+          // 用户停顿3秒后自动停止
           pauseFor: const Duration(seconds: 3),
         );
       }
     } else {
+      // 停止监听
       if (mounted) {
+        // 更新状态
         setState(() {
           _isListening = false;
           _statusMessage = 'Recognition completed';
@@ -142,6 +166,7 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
       await _speech.stop();
 
       if (_text.isNotEmpty && mounted) {
+        // 如果有识别文本,延迟100毫秒后处理
         Future.delayed(const Duration(milliseconds: 100), () {
           if (mounted) {
             _processVoiceInput();
@@ -151,8 +176,10 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
     }
   }
 
+  // 处理语音输入
   void _processVoiceInput() async {
     if (mounted) {
+      // 开始处理,更新处理状态和提示信息
       setState(() {
         _isProcessing = true;
         _statusMessage = 'Understanding your request...';
@@ -162,6 +189,7 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
     try {
       // 检查 API Key
       final apiKey = await _aiParser.getApiKey();
+      // 如果没有则显示配置对话框
       if (apiKey == null || apiKey.isEmpty) {
         _showApiKeyDialog();
         return;
@@ -177,16 +205,19 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
       final task = parsedData.toTask();
       if (!mounted) return;
 
+      // 通过Provider添加到任务列表
       final provider = context.read<TaskProvider>();
       await provider.addTask(task);
 
       // 如果有建议时间，自动安排
       final suggestedDateTime = parsedData.getSuggestedDateTime();
+      // 如果AI解析出了具体时间,尝试自动安排任务
       if (suggestedDateTime != null) {
         final canSchedule = await provider.scheduleTask(task, suggestedDateTime);
         if (canSchedule && mounted) {
           Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
+            // 成功后关闭对话框并显示成功提示
             SnackBar(
               content: Text(
                 'Created task "${task.title}" and scheduled for '
@@ -213,11 +244,13 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
     }
   }
 
+  // API Key配置对话框
   void _showApiKeyDialog() {
     final controller = TextEditingController();
 
     showDialog(
       context: context,
+      // 不能点击外部关闭
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Text('Set Claude API Key'),
@@ -237,12 +270,14 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
                 hintText: 'sk-ant-...',
                 border: OutlineInputBorder(),
               ),
+              // 密码模式，隐藏输入
               obscureText: true,
             ),
           ],
         ),
         actions: [
           TextButton(
+            // 取消按钮
             onPressed: () {
               Navigator.of(context).pop();
               Navigator.of(context).pop();
@@ -250,6 +285,7 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
             child: const Text('Cancel'),
           ),
           ElevatedButton(
+            // 提交按钮
             onPressed: () async {
               if (controller.text.isNotEmpty) {
                 await _aiParser.saveApiKey(controller.text);
@@ -269,6 +305,7 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
     );
   }
 
+  // 资源释放
   @override
   void dispose() {
     _speech.stop();
@@ -277,10 +314,12 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
     super.dispose();
   }
 
+  // UI构建
   @override
   Widget build(BuildContext context) {
     return Dialog(
       child: Container(
+        // 构建一个最大宽度400的对话框
         constraints: const BoxConstraints(maxWidth: 400),
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -316,9 +355,11 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
             const SizedBox(height: 24),
 
             // 麦克风动画
+            // 监听动画变化
             AnimatedBuilder(
               animation: _animation,
               builder: (context, child) {
+                // 实现缩放效果
                 return Transform.scale(
                   scale: _animation.value,
                   child: Container(
@@ -335,6 +376,7 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
                       icon: Icon(
                         _isListening ? Icons.mic : Icons.mic_none,
                         size: 48,
+                        // 监听时显示红色
                         color: _isListening
                             ? Colors.red
                             : Theme.of(context).colorScheme.primary,
@@ -378,7 +420,7 @@ class _VoiceInputDialogState extends State<VoiceInputDialog>
 
             const SizedBox(height: 24),
 
-            // 提示信息（英文版）
+            // 提示信息
             Text(
               'Examples:\n'
                   '"Schedule meeting tomorrow at 3 PM for 2 hours"\n'

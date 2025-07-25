@@ -4,10 +4,10 @@ import '../providers/task_provider.dart';
 import '../providers/time_block_provider.dart';
 import 'calendar_screen.dart';
 import 'task_list_screen.dart';
-import 'analytics_screen.dart';  // 新增
+import 'analytics_screen.dart';
 import 'settings_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends StatefulWidget {  // 定义HomeScreen类,继承自有状态组件
   const HomeScreen({super.key});
 
   @override
@@ -15,21 +15,21 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
+  int _currentIndex = 0;  // 记录当前选中底部导航栏索引
 
-  // 更新页面列表，添加AnalyticsScreen
+  // 页面列表
   List<Widget> get _screens => [
-    const CalendarScreen(),
-    const TaskListScreen(),
-    const AnalyticsScreen(),  // 新增
-    const SettingsScreen(),
+    const CalendarScreen(),  // 日历界面
+    const TaskListScreen(),  // 任务列表界面
+    const AnalyticsScreen(),  // 分析统计界面
+    const SettingsScreen(),  // 设置界面
   ];
 
-  // 更新标题列表
+  // 标题列表,用于AppBar显示
   final List<String> _titles = const [
     'Calendar View',
     'Task List',
-    'Analytics',  // 新增
+    'Analytics',
     'Settings',
   ];
 
@@ -37,7 +37,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     // 初始化加载数据
-    Future.microtask(() {
+    Future.microtask(() {  // 等界面渲染好了,再加载数据
+      // 读取Provider实例并使用其中的加载方法
       context.read<TaskProvider>().loadTasks();
       context.read<TimeBlockProvider>().loadTimeBlocks();
     });
@@ -45,27 +46,34 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 返回页面基础结构,Scaffold:顶部栏,主题内容,底部栏
     return Scaffold(
+      // 顶部栏
       appBar: AppBar(
-        title: Text(_titles[_currentIndex]),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(_titles[_currentIndex]),  // 动态显示当前页面标题
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,  // 背景色
       ),
-      body: IndexedStack(
-        index: _currentIndex,
+      // 主体内容
+      body: IndexedStack(  // 保持所以界面的堆栈式布局
+        index: _currentIndex,  // 只显示当前索引对应的页面
         children: _screens,
       ),
+      //底部导航栏
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
+        // 点击回调,更新当前索引
         onDestinationSelected: (index) {
+          // 触发界面重建
           setState(() {
             _currentIndex = index;
           });
         },
+        // 导航项
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.calendar_today),
-            selectedIcon: Icon(Icons.calendar_today, color: Colors.blue),
-            label: 'Calendar',
+            icon: Icon(Icons.calendar_today),  // 未选中时的图标
+            selectedIcon: Icon(Icons.calendar_today, color: Colors.blue),  // 选中时的样子
+            label: 'Calendar',  //标签文本
           ),
           NavigationDestination(
             icon: Icon(Icons.list),
@@ -73,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Tasks',
           ),
           NavigationDestination(
-            icon: Icon(Icons.analytics),  // 新增
+            icon: Icon(Icons.analytics),
             selectedIcon: Icon(Icons.analytics, color: Colors.blue),
             label: 'Analytics',
           ),
