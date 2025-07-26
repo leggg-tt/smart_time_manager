@@ -9,29 +9,32 @@ import '../widgets/pomodoro_settings_dialog.dart';
 import '../widgets/scheduler_preferences_dialog.dart';
 import '../services/test_data_generator.dart';
 
+// 主组件SettingsScreen
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // 使用DefaultTabController创建标签页布局
     return DefaultTabController(
-      length: 2,
+      length: 2, // 两个标签页
       child: Scaffold(
+        // PreferredSize用于自定义AppBar高度
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: AppBar(
             bottom: const TabBar(
               tabs: [
-                Tab(text: 'Time Blocks'),
-                Tab(text: 'General'),
+                Tab(text: 'Time Blocks'),  // 时间块设置
+                Tab(text: 'General'),  // 通用设置
               ],
             ),
           ),
         ),
         body: const TabBarView(
           children: [
-            _TimeBlockSettings(),
-            _GeneralSettings(),
+            _TimeBlockSettings(),  // 时间块设置页面
+            _GeneralSettings(),  // 通用设置页面
           ],
         ),
       ),
@@ -39,9 +42,11 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
+//  时间块设置页面
 class _TimeBlockSettings extends StatelessWidget {
   const _TimeBlockSettings({super.key});
 
+  // 基本结构
   @override
   Widget build(BuildContext context) {
     return Consumer<TimeBlockProvider>(
@@ -52,6 +57,7 @@ class _TimeBlockSettings extends StatelessWidget {
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              // 信息卡片
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -72,6 +78,7 @@ class _TimeBlockSettings extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 8),
+                      // 显示时间块功能说明
                       Text(
                         'Time blocks help you define energy and focus levels for different periods. '
                             'The system uses this information to intelligently recommend task scheduling.',
@@ -83,14 +90,18 @@ class _TimeBlockSettings extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
+              // 时间块列表头部
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // 标题
                   Text(
                     'My Time Blocks',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
+                  // 添加按钮
                   IconButton(
+                    // 点击添加按钮显示新建时间块对话框
                     onPressed: () => _showAddTimeBlockDialog(context),
                     icon: const Icon(Icons.add_circle_outline),
                     tooltip: 'Add time block',
@@ -99,6 +110,7 @@ class _TimeBlockSettings extends StatelessWidget {
               ),
               const SizedBox(height: 8),
 
+              // 时间块列表显示
               if (timeBlocks.isEmpty)
                 _buildEmptyState(context)
               else
@@ -109,7 +121,7 @@ class _TimeBlockSettings extends StatelessWidget {
                     onTap: () => _editTimeBlock(context, block),
                     onToggle: () => provider.toggleTimeBlockActive(block.id),
                     onDelete: block.isDefault
-                        ? null
+                        ? null  // 默认时间块不能删除
                         : () => _deleteTimeBlock(context, provider, block),
                   ),
                 )),
@@ -120,20 +132,25 @@ class _TimeBlockSettings extends StatelessWidget {
     );
   }
 
+  // 空状态显示
   Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
+            // 按钮
             Icons.access_time,
             size: 64,
+            // 使用半透明效果增强视觉层次
             color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
           ),
           const SizedBox(height: 16),
           Text(
+            // 标题
             'No time blocks configured',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              // 使用半透明效果增强视觉层次
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             ),
           ),
@@ -148,6 +165,7 @@ class _TimeBlockSettings extends StatelessWidget {
     );
   }
 
+  // 添加时间块对话框
   void _showAddTimeBlockDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -155,6 +173,7 @@ class _TimeBlockSettings extends StatelessWidget {
     );
   }
 
+  // 修改时间对话框
   void _editTimeBlock(BuildContext context, UserTimeBlock block) {
     showDialog(
       context: context,
@@ -162,12 +181,14 @@ class _TimeBlockSettings extends StatelessWidget {
     );
   }
 
+  // 删除时间块对话框
   void _deleteTimeBlock(
       BuildContext context,
       TimeBlockProvider provider,
       UserTimeBlock block,
       ) {
     showDialog(
+      // 确认删除的对话框,防止误操作
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Time Block'),
@@ -181,11 +202,13 @@ class _TimeBlockSettings extends StatelessWidget {
             onPressed: () {
               provider.deleteTimeBlock(block.id);
               Navigator.of(context).pop();
+              // 删除后显示 SnackBar 提示
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Time block deleted')),
               );
             },
             child: const Text('Delete'),
+            // 使用红色文字强调删除操作的危险性
             style: TextButton.styleFrom(foregroundColor: Colors.red),
           ),
         ],
@@ -194,6 +217,7 @@ class _TimeBlockSettings extends StatelessWidget {
   }
 }
 
+// 通用设置页面(_GeneralSettings)
 class _GeneralSettings extends StatelessWidget {
   const _GeneralSettings({super.key});
 
@@ -202,17 +226,21 @@ class _GeneralSettings extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        // 主要设置选项
         Card(
           child: Column(
             children: [
+              // 使用ListTile组件创建标准的设置项布局
               ListTile(
                 leading: const Icon(Icons.timer),
                 title: const Text('Pomodoro Timer'),
                 subtitle: const Text('Customize work and break durations'),
                 trailing: const Icon(Icons.chevron_right),
+                // 点击后打开对应的设置对话框
                 onTap: () {
                   showDialog(
                     context: context,
+                    // 跳到番茄时钟自定义界面
                     builder: (context) => const PomodoroSettingsDialog(),
                   );
                 },
@@ -226,11 +254,13 @@ class _GeneralSettings extends StatelessWidget {
                 onTap: () {
                   showDialog(
                     context: context,
+                    // 跳到自定义任务调度页面
                     builder: (context) => const SchedulerPreferencesDialog(),
                   );
                 },
               ),
               const Divider(height: 1),
+              // 开关类设置(设置提醒功能,暂时还未实现)
               ListTile(
                 leading: const Icon(Icons.notifications),
                 title: const Text('Task Reminders'),
@@ -238,28 +268,30 @@ class _GeneralSettings extends StatelessWidget {
                 trailing: Switch(
                   value: true,
                   onChanged: (value) {
-                    // TODO: Implement reminder settings
+                    // TODO: 实现任务提醒设置
                   },
                 ),
               ),
               const Divider(height: 1),
+              // 开关类设置(设置工作时间设置,暂时还未实现)
               ListTile(
                 leading: const Icon(Icons.access_time),
                 title: const Text('Working Hours'),
                 subtitle: const Text('9:00 AM - 6:00 PM'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
-                  // TODO: Implement working hours settings
+                  // TODO: 实现工作时间设置
                 },
               ),
               const Divider(height: 1),
+              // 开关类设置(设置午休时间设置,暂时还未实现)
               ListTile(
                 leading: const Icon(Icons.restaurant),
                 title: const Text('Lunch Break'),
                 subtitle: const Text('12:00 PM - 1:00 PM'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
-                  // TODO: Implement lunch break settings
+                  // TODO: 实现休息时间设置
                 },
               ),
             ],
@@ -270,22 +302,24 @@ class _GeneralSettings extends StatelessWidget {
           child: Column(
             children: [
               ListTile(
+                // 主题设置(暂时未实现)
                 leading: const Icon(Icons.color_lens),
                 title: const Text('Theme'),
                 subtitle: const Text('Follow System'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
-                  // TODO: Implement theme settings
+                  // TODO: 实现主题设置
                 },
               ),
               const Divider(height: 1),
+              // 多种语言设置(暂时未实现)
               ListTile(
                 leading: const Icon(Icons.language),
                 title: const Text('Language'),
                 subtitle: const Text('English'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
-                  // TODO: Implement language settings
+                  // TODO: 实现多种语言设置
                 },
               ),
             ],
@@ -311,16 +345,17 @@ class _GeneralSettings extends StatelessWidget {
             ],
           ),
         ),
-        // Add developer options section at the bottom
-        if (true) ...[  // You can change to kDebugMode for production
+        // 开发者选项
+        if (true) ...[  // 可以更改为kDebugMode以进行生产
           const SizedBox(height: 32),
           Card(
-            color: Colors.orange.shade50,
+            color: Colors.orange.shade50,  // 橙色背景突出显示
             child: Column(
               children: [
                 ListTile(
                   leading: const Icon(Icons.developer_mode, color: Colors.orange),
                   title: const Text(
+                    // 标题显示
                     'Developer Options',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
@@ -328,6 +363,7 @@ class _GeneralSettings extends StatelessWidget {
                 ),
                 const Divider(height: 1),
                 ListTile(
+                  // 生成任务数据
                   leading: const Icon(Icons.auto_awesome),
                   title: const Text('Generate Test Data'),
                   subtitle: const Text('Create sample tasks for testing'),
@@ -335,6 +371,7 @@ class _GeneralSettings extends StatelessWidget {
                   onTap: () => _showTestDataDialog(context),
                 ),
                 ListTile(
+                  // 清理所有任务数据
                   leading: const Icon(Icons.delete_sweep, color: Colors.red),
                   title: const Text('Clear All Tasks'),
                   subtitle: const Text('Remove all tasks from database'),
@@ -349,6 +386,7 @@ class _GeneralSettings extends StatelessWidget {
     );
   }
 
+  // 测试数据生成界面
   void _showTestDataDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -356,29 +394,34 @@ class _GeneralSettings extends StatelessWidget {
     );
   }
 
+  // 清空数据界面
   void _showClearDataDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        // 使用AlertDialog提供确认界面
         title: const Text('Clear All Tasks?'),
         content: const Text(
           'This will permanently delete all tasks from the database. '
               'This action cannot be undone.',
         ),
+        // 操作按钮
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cancel'),
           ),
           TextButton(
+            // 使用async/await异步处理数据库操作
             onPressed: () async {
               final generator = TestDataGenerator();
               await generator.clearAllTasks();
 
-              // Reload tasks
+              // context.mounted检查:防止组件已卸载时操作context，避免内存泄漏
               if (context.mounted) {
                 context.read<TaskProvider>().loadTasks();
                 Navigator.of(context).pop();
+                // 通过SnackBar提供操作结果反馈
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('All tasks cleared')),
                 );
@@ -392,23 +435,28 @@ class _GeneralSettings extends StatelessWidget {
   }
 }
 
-// Test data generator dialog - 改进版
+// 测试数据生成器对话框
 class _TestDataGeneratorDialog extends StatefulWidget {
   @override
   State<_TestDataGeneratorDialog> createState() => _TestDataGeneratorDialogState();
 }
 
+// 状态管理
+// 定义测试数据生成的各种参数
+// 使用有状态组件管理用户输入
 class _TestDataGeneratorDialogState extends State<_TestDataGeneratorDialog> {
-  int _daysBack = 7;  // 改为7天
-  int _tasksPerDay = 3;  // 改为每天3个任务
-  double _completionRate = 0.75;
-  bool _includePomodoros = true;
-  bool _useRealisticPatterns = true;  // 新增：真实模式
-  bool _isGenerating = false;
+  int _daysBack = 7;  // 生成过去7天的数据
+  int _tasksPerDay = 3;  // 每天3个任务
+  double _completionRate = 0.75;  // 75%完成率
+  bool _includePomodoros = true;  // 包含番茄钟数据
+  bool _useRealisticPatterns = true;  // 使用真实模式
+  bool _isGenerating = false;  // 生成中状态
 
+  // UI构建
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      // 使用AlertDialog提供确认界面
       title: const Text('Generate Test Data'),
       content: SingleChildScrollView(
         child: Column(
@@ -432,6 +480,7 @@ class _TestDataGeneratorDialogState extends State<_TestDataGeneratorDialog> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
+                      // 告知用户测试数据会有 [TEST] 前缀标记
                       'Test tasks will be marked with [TEST] prefix',
                       style: TextStyle(
                         color: Colors.blue.shade700,
@@ -444,59 +493,64 @@ class _TestDataGeneratorDialogState extends State<_TestDataGeneratorDialog> {
             ),
             const SizedBox(height: 16),
 
-            // Days back
+            // 天数选择滑块
             Text('Days to generate: $_daysBack'),
             Slider(
               value: _daysBack.toDouble(),
-              min: 3,
-              max: 30,
-              divisions: 27,
-              label: '$_daysBack days',
+              min: 3,  // 最少3天
+              max: 30,  // 最多30天
+              divisions: 27,  // 30-3 = 27个分段
+              label: '$_daysBack days',  // 拖动时显示的标签
               onChanged: (value) {
+                // value.round():确保是整数天数
                 setState(() => _daysBack = value.round());
               },
             ),
 
-            // Tasks per day
+            // 每日任务数量滑块
             Text('Tasks per day: $_tasksPerDay'),
             Slider(
-              value: _tasksPerDay.toDouble(),
-              min: 1,
-              max: 7,
-              divisions: 6,
-              label: '$_tasksPerDay tasks',
+              value: _tasksPerDay.toDouble(),  // Slider 需要 double 类型值
+              min: 1,  // 最少一个任务
+              max: 7,  // 最多七个
+              divisions: 6,  // 将 1-7 分成 6 段（7-1=6），每段代表1个任务
+              label: '$_tasksPerDay tasks',  // 拖动时显示的悬浮提示
               onChanged: (value) {
                 setState(() => _tasksPerDay = value.round());
               },
             ),
 
-            // Completion rate
+            // 完成率滑块
+            // 百分比处理
             Text('Completion rate: ${(_completionRate * 100).toStringAsFixed(0)}%'),
             Slider(
               value: _completionRate,
               min: 0.0,
               max: 1.0,
-              divisions: 10,
+              divisions: 10,  // 提供 0%, 10%, 20%...100% 共 11 个选项
               label: '${(_completionRate * 100).toStringAsFixed(0)}%',
               onChanged: (value) {
                 setState(() => _completionRate = value);
               },
             ),
 
-            // Options
+            // 番茄钟数据开关
             SwitchListTile(
               title: const Text('Include Pomodoro data'),
               subtitle: const Text('Add time tracking info to completed tasks'),
               value: _includePomodoros,
+              // 模拟用户使用番茄钟功能的情况
               onChanged: (value) {
                 setState(() => _includePomodoros = value);
               },
               contentPadding: EdgeInsets.zero,
             ),
 
+            // 真实模式开关,开启后会模拟真实使用模式
             SwitchListTile(
               title: const Text('Realistic patterns'),
               subtitle: const Text('Vary task count by day of week'),
+              // 周末任务较少,工作日任务较多,增加数据的真实性和多样性
               value: _useRealisticPatterns,
               onChanged: (value) {
                 setState(() => _useRealisticPatterns = value);
