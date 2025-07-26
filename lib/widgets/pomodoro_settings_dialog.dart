@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../services/pomodoro_settings_service.dart';
 import '../providers/pomodoro_provider.dart';
 
+// 定义PomodoroSettingsDialog类
 class PomodoroSettingsDialog extends StatefulWidget {
   const PomodoroSettingsDialog({Key? key}) : super(key: key);
 
@@ -10,30 +11,42 @@ class PomodoroSettingsDialog extends StatefulWidget {
   State<PomodoroSettingsDialog> createState() => _PomodoroSettingsDialogState();
 }
 
+// 状态类定义
 class _PomodoroSettingsDialogState extends State<PomodoroSettingsDialog> {
+  // _settings:存储当前的番茄钟设置（工作时长、休息时长等）
   late PomodoroSettings _settings;
+  // _selectedPreset:当前选中的预设模式（classic、short_focus、deep_work或custom）
   String _selectedPreset = 'custom';
+  // _isLoading:加载状态标志，用于显示加载指示器
   bool _isLoading = true;
 
   @override
+  // 在组件创建时调用一次
   void initState() {
     super.initState();
+    // 加载用户保存的设置
     _loadCurrentSettings();
   }
 
+  // 加载设置方法
   Future<void> _loadCurrentSettings() async {
+    // 异步方法,从服务层加载设置
     final settings = await PomodoroSettingsService.loadSettings();
+    // 更新UI状态
     setState(() {
       _settings = settings;
       _isLoading = false;
+      // 检查当前设置是否匹配某个预设
       _checkPreset(settings);
     });
   }
 
+  // 检查预设方法
   void _checkPreset(PomodoroSettings settings) {
-    // Check if current settings match any preset
+    // 检查当前设置是否与任何预设匹配
     for (final entry in PomodoroSettings.presets.entries) {
       final preset = entry.value;
+      // 遍历所有预设模式,比较当前设置的各项参数是否完全匹配某个预设
       if (preset.workDuration == settings.workDuration &&
           preset.shortBreakDuration == settings.shortBreakDuration &&
           preset.longBreakDuration == settings.longBreakDuration &&
@@ -42,10 +55,12 @@ class _PomodoroSettingsDialogState extends State<PomodoroSettingsDialog> {
         return;
       }
     }
+    // 如果都不匹配,设置为 'custom'
     _selectedPreset = 'custom';
   }
 
   @override
+  // 加载状态
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Dialog(
@@ -56,6 +71,7 @@ class _PomodoroSettingsDialogState extends State<PomodoroSettingsDialog> {
       );
     }
 
+    // 主对话结构
     return Dialog(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 500),
@@ -66,7 +82,7 @@ class _PomodoroSettingsDialogState extends State<PomodoroSettingsDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Title
+                // 标题部分
                 Row(
                   children: [
                     Icon(
@@ -85,12 +101,13 @@ class _PomodoroSettingsDialogState extends State<PomodoroSettingsDialog> {
                 ),
                 const SizedBox(height: 24),
 
-                // Preset selection
+                // 预设选项
                 Text(
                   'Presets',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
+                // 预设选择部分
                 Wrap(
                   spacing: 8,
                   children: [
@@ -102,7 +119,7 @@ class _PomodoroSettingsDialogState extends State<PomodoroSettingsDialog> {
                 ),
                 const SizedBox(height: 24),
 
-                // Work duration
+                // 创建工作时长滑块
                 _buildDurationSlider(
                   title: 'Work Duration',
                   value: _settings.workDuration,
@@ -119,7 +136,7 @@ class _PomodoroSettingsDialogState extends State<PomodoroSettingsDialog> {
                 ),
                 const SizedBox(height: 20),
 
-                // Short break duration
+                // 短休时间
                 _buildDurationSlider(
                   title: 'Short Break',
                   value: _settings.shortBreakDuration,
@@ -136,7 +153,7 @@ class _PomodoroSettingsDialogState extends State<PomodoroSettingsDialog> {
                 ),
                 const SizedBox(height: 20),
 
-                // Long break duration
+                // 长休时间
                 _buildDurationSlider(
                   title: 'Long Break',
                   value: _settings.longBreakDuration,
@@ -153,7 +170,7 @@ class _PomodoroSettingsDialogState extends State<PomodoroSettingsDialog> {
                 ),
                 const SizedBox(height: 20),
 
-                // Pomodoros until long break
+                // 经历几个番茄时间点进入长休阶段
                 _buildDurationSlider(
                   title: 'Pomodoros Until Long Break',
                   value: _settings.pomodorosUntilLongBreak,
@@ -170,7 +187,7 @@ class _PomodoroSettingsDialogState extends State<PomodoroSettingsDialog> {
                 ),
                 const SizedBox(height: 16),
 
-                // Preview
+                // 预览区域
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -185,6 +202,7 @@ class _PomodoroSettingsDialogState extends State<PomodoroSettingsDialog> {
                         style: Theme.of(context).textTheme.titleSmall,
                       ),
                       const SizedBox(height: 8),
+                      // 详细展示番茄时钟工作流程
                       Text(
                         'Work: ${_settings.workDuration} min → '
                             'Break: ${_settings.shortBreakDuration} min\n'
@@ -197,7 +215,7 @@ class _PomodoroSettingsDialogState extends State<PomodoroSettingsDialog> {
                 ),
                 const SizedBox(height: 24),
 
-                // Action buttons
+                // 操作按钮
                 Wrap(
                   alignment: WrapAlignment.end,
                   spacing: 8,
@@ -207,24 +225,28 @@ class _PomodoroSettingsDialogState extends State<PomodoroSettingsDialog> {
                         await PomodoroSettingsService.resetToDefault();
                         await _loadCurrentSettings();
                       },
+                      // "重置为默认"按钮：恢复默认设置并重新加载
                       child: const Text('Reset to Default'),
                     ),
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
                       child: const Text('Cancel'),
                     ),
+                    // 保存按钮
                     ElevatedButton(
                       onPressed: () async {
+                        // 验证设置的有效性
                         if (PomodoroSettingsService.validateSettings(_settings)) {
+                          // 保存设置到本地存储
                           await PomodoroSettingsService.saveSettings(_settings);
 
-                          // Update provider if it exists
+                          // 检查组件是否仍然挂载,避免异步操作后的错误
                           if (context.mounted) {
                             try {
                               final provider = context.read<PomodoroProvider>();
                               await provider.updateSettings(_settings);
                             } catch (e) {
-                              // Provider might not exist
+                              // 尝试更新Provider中的设置（如果Provider存在）
                             }
                           }
 
@@ -255,14 +277,17 @@ class _PomodoroSettingsDialogState extends State<PomodoroSettingsDialog> {
     );
   }
 
+  // 预设芯片构建方法
   Widget _buildPresetChip(String key, String label) {
     return ChoiceChip(
       label: Text(label),
+      // 选中预设时,自动应用对应的设置值
       selected: _selectedPreset == key,
       onSelected: (selected) {
         if (selected) {
           setState(() {
             _selectedPreset = key;
+            // 如果选择custom,保持当前设置不变
             if (key != 'custom') {
               _settings = PomodoroSettings.presets[key]!;
             }
@@ -272,6 +297,7 @@ class _PomodoroSettingsDialogState extends State<PomodoroSettingsDialog> {
     );
   }
 
+  // 滑块构建方法
   Widget _buildDurationSlider({
     required String title,
     required num value,
