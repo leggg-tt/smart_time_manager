@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'providers/task_provider.dart';
 import 'providers/time_block_provider.dart';
+import 'providers/theme_provider.dart';  // 【新增】导入主题提供者
 import 'screens/home_screen.dart';
 
 void main() async {
@@ -21,22 +22,43 @@ class MyApp extends StatelessWidget {  //StatelessWidget无状态组件,组件�
         //俩个全局状态管理器.TaskProvider:管理任务数据;TimeBlockProvider:管理时间块数据
         ChangeNotifierProvider(create: (_) => TaskProvider()),
         ChangeNotifierProvider(create: (_) => TimeBlockProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),  // 【新增】添加主题提供者
       ],
-      child: MaterialApp(
-        title: 'Smart Time Manager',  //应用标题
-        theme: ThemeData(  //应用主题背景
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.blue,
-            brightness: Brightness.light,
-          ),
-          useMaterial3: true,
-          appBarTheme: const AppBarTheme(   //自定义应用栏主题
-            centerTitle: true,  //居中显示
-            elevation: 0,  //移除阴影效果
-          ),
-        ),
-        home: const HomeScreen(),  //设置应用主页面为HomeScreen
-        debugShowCheckedModeBanner: false, //隐藏debug标签
+      // 【修改】使用 Consumer 包裹 MaterialApp 以监听主题变化
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp(
+            title: 'Smart Time Manager',  //应用标题
+            // 【修改】保持原有的浅色主题配置
+            theme: ThemeData(  //应用主题背景
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: Colors.blue,
+                brightness: Brightness.light,
+              ),
+              useMaterial3: true,
+              appBarTheme: const AppBarTheme(   //自定义应用栏主题
+                centerTitle: true,  //居中显示
+                elevation: 0,  //移除阴影效果
+              ),
+            ),
+            // 【新增】添加深色主题配置
+            darkTheme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: Colors.blue,
+                brightness: Brightness.dark,
+              ),
+              useMaterial3: true,
+              appBarTheme: const AppBarTheme(
+                centerTitle: true,
+                elevation: 0,
+              ),
+            ),
+            // 【新增】使用主题提供者的主题模式
+            themeMode: themeProvider.actualThemeMode,
+            home: const HomeScreen(),  //设置应用主页面为HomeScreen
+            debugShowCheckedModeBanner: false, //隐藏debug标签
+          );
+        },
       ),
     );
   }

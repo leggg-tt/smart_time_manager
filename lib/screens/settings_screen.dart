@@ -8,6 +8,8 @@ import '../widgets/add_time_block_dialog.dart';
 import '../widgets/pomodoro_settings_dialog.dart';
 import '../widgets/scheduler_preferences_dialog.dart';
 import '../services/test_data_generator.dart';
+import '../providers/theme_provider.dart';
+import '../widgets/theme_selector_dialog.dart';
 
 // 主组件SettingsScreen
 class SettingsScreen extends StatelessWidget {
@@ -302,13 +304,19 @@ class _GeneralSettings extends StatelessWidget {
           child: Column(
             children: [
               ListTile(
-                // 主题设置(暂时未实现)
                 leading: const Icon(Icons.color_lens),
                 title: const Text('Theme'),
-                subtitle: const Text('Follow System'),
+                subtitle: Consumer<ThemeProvider>(
+                  builder: (context, provider, child) {
+                    return Text(provider.themeModeText);
+                  },
+                ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
-                  // TODO: 实现主题设置
+                  showDialog(
+                    context: context,
+                    builder: (context) => const ThemeSelectorDialog(),
+                  );
                 },
               ),
               const Divider(height: 1),
