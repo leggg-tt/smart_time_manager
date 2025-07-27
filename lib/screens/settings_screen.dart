@@ -293,6 +293,7 @@ class _GeneralSettings extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+        // 主题选择
         Card(
           child: Column(
             children: [

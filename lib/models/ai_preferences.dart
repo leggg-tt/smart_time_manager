@@ -1,36 +1,37 @@
-// AI 偏好设置模型
+// AI偏好设置模型
 class AIPreferences {
   // 任务默认时长（分钟）
-  final int meetingDefaultDuration;
-  final int creativeDefaultDuration;
-  final int routineDefaultDuration;
-  final int analyticalDefaultDuration;
+  final int meetingDefaultDuration;  // 会议类任务默认时长（分钟）
+  final int creativeDefaultDuration;  // 创意类任务默认时长
+  final int routineDefaultDuration;  // 日常类任务默认时长
+  final int analyticalDefaultDuration;  // 分析类任务默认时长
 
   // 会议/通话类默认属性
-  final String meetingDefaultEnergy;
-  final String meetingDefaultFocus;
+  final String meetingDefaultEnergy;  // 默认能量需求
+  final String meetingDefaultFocus;  // 默认专注度需求
 
   // 创意工作类默认属性
-  final String creativeDefaultEnergy;
-  final String creativeDefaultFocus;
+  final String creativeDefaultEnergy;  // 默认能量需求
+  final String creativeDefaultFocus;  // 默认专注度需求
 
   // 日常任务类默认属性
-  final String routineDefaultEnergy;
-  final String routineDefaultFocus;
+  final String routineDefaultEnergy;  // 默认能量需求
+  final String routineDefaultFocus;  // 默认专注度需求
 
   // 分析工作类默认属性
-  final String analyticalDefaultEnergy;
-  final String analyticalDefaultFocus;
+  final String analyticalDefaultEnergy;  // 默认能量需求
+  final String analyticalDefaultFocus;  // 默认专注度需求
 
   // 时间解析偏好
-  final String tomorrowDefaultTime;
-  final String nextWeekDefaultDay;
-  final String workTimePreference;
+  final String tomorrowDefaultTime;  // 假设语音只解析出明天,默认时间是
+  final String nextWeekDefaultDay;  // 假设语音只解析出下周,默认时间是
+  final String workTimePreference;  // 工作时间偏好
 
-  // API 使用统计
-  final int apiCallCount;
-  final DateTime? lastApiCallTime;
+  // API使用次数统计
+  final int apiCallCount;  // API调用次数
+  final DateTime? lastApiCallTime;  // 最后一次API调用时间
 
+  // 构造函数,默认模板
   AIPreferences({
     this.meetingDefaultDuration = 60,
     this.creativeDefaultDuration = 90,
@@ -51,7 +52,7 @@ class AIPreferences {
     this.lastApiCallTime,
   });
 
-  // 默认偏好设置
+  // 默认偏好设置,获取默认配置实例
   static AIPreferences get defaultPreferences => AIPreferences();
 
   // JSON 序列化
@@ -75,7 +76,7 @@ class AIPreferences {
     'lastApiCallTime': lastApiCallTime?.toIso8601String(),
   };
 
-  // 从 JSON 创建
+  // 将json数据(map格式)转换回AIPreferences对象实例
   factory AIPreferences.fromJson(Map<String, dynamic> json) => AIPreferences(
     meetingDefaultDuration: json['meetingDefaultDuration'] ?? 60,
     creativeDefaultDuration: json['creativeDefaultDuration'] ?? 90,
@@ -98,7 +99,7 @@ class AIPreferences {
         : null,
   );
 
-  // 复制并更新
+  // 创建当前对象的副本,只修改指定的字段,保持其他字段不变
   AIPreferences copyWith({
     int? meetingDefaultDuration,
     int? creativeDefaultDuration,
@@ -138,6 +139,8 @@ class AIPreferences {
   );
 
   // 生成自定义的解析规则文本
+  // 用户可以在通用设置界面自行更改
+  // 但考虑到可以改变的内容较少,现在想的解决办法是在ai_service中自己再加一些prompt来完善
   String generateParsingRules() {
     return '''
 Parsing rules:
