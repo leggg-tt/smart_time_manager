@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
+// 定义TimeUtilizationCard组件,这是一个有状态的组件
 class TimeUtilizationCard extends StatefulWidget {
+  // 接收数据,包含计划时间,实际时间和利用率
   final Map<String, dynamic> data;
 
+  // 构造函数
   const TimeUtilizationCard({
     Key? key,
     required this.data,
@@ -12,53 +15,68 @@ class TimeUtilizationCard extends StatefulWidget {
   State<TimeUtilizationCard> createState() => _TimeUtilizationCardState();
 }
 
+// State类,混入SingleTickerProviderStateMixin用于动画
 class _TimeUtilizationCardState extends State<TimeUtilizationCard>
     with SingleTickerProviderStateMixin {
+  // 动画控制器,控制动画的播放
   late AnimationController _animationController;
+  // 进度条动画,用于显示时间利用率的动画效果
   late Animation<double> _progressAnimation;
 
+  // 动画控制器初始化
   @override
   void initState() {
     super.initState();
+    // 创建动画控制器,设置动画持续时间为1.5秒
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
 
+    // 从传入的数据中获取利用率
     final utilizationRate = widget.data['utilizationRate'] as double;
-    // 限制进度条最大值为 1.0 (100%)
+    // 限制进度条最大值为1.0(100%)
     final clampedRate = utilizationRate.clamp(0, 100) / 100;
 
+    // 创建进度动画,从0渐变到实际利用率
     _progressAnimation = Tween<double>(
       begin: 0,
       end: clampedRate,
     ).animate(CurvedAnimation(
       parent: _animationController,
+      // 使用缓入缓出的动画曲线
       curve: Curves.easeInOut,
     ));
 
+    // 启动动画
     _animationController.forward();
   }
 
   @override
   void dispose() {
+    // 释放动画控制器,防止内存泄漏
     _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final plannedHours = widget.data['plannedHours'] as double;
-    final actualHours = widget.data['actualHours'] as double;
-    final utilizationRate = widget.data['utilizationRate'] as double;
-    final isOvertime = utilizationRate > 100;
+    // 从数据中提取所需值
+    final plannedHours = widget.data['plannedHours'] as double;  // 计划小时数
+    final actualHours = widget.data['actualHours'] as double;  // 实际小时数
+    final utilizationRate = widget.data['utilizationRate'] as double;  // 利用率
+    final isOvertime = utilizationRate > 100;  // 判断是否超时（利用率超过100%）
 
+    // 返回卡片组件
     return Card(
+      // 卡片阴影高度
       elevation: 4,
+      // 圆角
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
+          // 渐变背景,从左上到右下
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -73,8 +91,10 @@ class _TimeUtilizationCardState extends State<TimeUtilizationCard>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 标题行
               Row(
                 children: [
+                  // 图标容器
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -88,6 +108,7 @@ class _TimeUtilizationCardState extends State<TimeUtilizationCard>
                     ),
                   ),
                   const SizedBox(width: 16),
+                  // 标题和副标题
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,6 +128,7 @@ class _TimeUtilizationCardState extends State<TimeUtilizationCard>
                       ],
                     ),
                   ),
+                  // 如果超时,显示超时标签
                   if (isOvertime)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -135,33 +157,42 @@ class _TimeUtilizationCardState extends State<TimeUtilizationCard>
               ),
               const SizedBox(height: 24),
 
-              // Animated stats
+              // 动画统计数据行
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
+                  // 计划时间统计
                   _buildAnimatedStat(
                     context,
                     'Planned',
                     plannedHours,
                     Colors.blue,
                     Icons.event_note,
+                    // 无延迟
                     0,
                   ),
+                  // 实际时间统计
                   _buildAnimatedStat(
                     context,
                     'Actual',
                     actualHours,
+                    // 超时显示橙色,否则绿色
                     isOvertime ? Colors.orange : Colors.green,
                     isOvertime ? Icons.timer_off : Icons.check_circle,
+                    // 200ms 延迟开始动画
                     200,
                   ),
+                  // 效率统计
                   _buildAnimatedStat(
                     context,
                     'Efficiency',
                     utilizationRate,
+                    // 根据效率获取颜色
                     _getEfficiencyColor(utilizationRate),
                     isOvertime ? Icons.trending_down : Icons.trending_up,
+                    // 400ms延迟开始动画
                     400,
+                    // 显示为百分比
                     isPercentage: true,
                   ),
                 ],
@@ -169,10 +200,11 @@ class _TimeUtilizationCardState extends State<TimeUtilizationCard>
 
               const SizedBox(height: 24),
 
-              // Progress bar with animation (修改为支持超时显示)
+              // 进度条部分
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // 进度条标题行
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -180,6 +212,7 @@ class _TimeUtilizationCardState extends State<TimeUtilizationCard>
                         'Time Usage',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
+                      // 使用AnimatedBuilder监听动画变化
                       AnimatedBuilder(
                         animation: _progressAnimation,
                         builder: (context, child) {
@@ -195,11 +228,13 @@ class _TimeUtilizationCardState extends State<TimeUtilizationCard>
                     ],
                   ),
                   const SizedBox(height: 8),
+                  // 进度条动画
                   AnimatedBuilder(
                     animation: _progressAnimation,
                     builder: (context, child) {
                       return Stack(
                         children: [
+                          // 进度条背景
                           Container(
                             height: 12,
                             decoration: BoxDecoration(
@@ -207,12 +242,14 @@ class _TimeUtilizationCardState extends State<TimeUtilizationCard>
                               borderRadius: BorderRadius.circular(6),
                             ),
                           ),
-                          // 正常进度条
+                          // 填充的进度条
                           FractionallySizedBox(
+                            // 根据动画值设置宽度比例
                             widthFactor: _progressAnimation.value,
                             child: Container(
                               height: 12,
                               decoration: BoxDecoration(
+                                // 渐变色
                                 gradient: LinearGradient(
                                   colors: [
                                     isOvertime ? Colors.orange : _getEfficiencyColor(utilizationRate),
@@ -220,6 +257,7 @@ class _TimeUtilizationCardState extends State<TimeUtilizationCard>
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(6),
+                                // 阴影效果
                                 boxShadow: [
                                   BoxShadow(
                                     color: (isOvertime ? Colors.orange : _getEfficiencyColor(utilizationRate)).withOpacity(0.3),
@@ -230,7 +268,7 @@ class _TimeUtilizationCardState extends State<TimeUtilizationCard>
                               ),
                             ),
                           ),
-                          // 100% 标记线
+                          // 如果超时,在100%位置显示红线标记
                           if (isOvertime)
                             Positioned(
                               right: 0,
@@ -245,6 +283,7 @@ class _TimeUtilizationCardState extends State<TimeUtilizationCard>
                       );
                     },
                   ),
+                  // 如果超时,显示0%和100%标记
                   if (isOvertime) ...[
                     const SizedBox(height: 4),
                     Row(
@@ -270,7 +309,7 @@ class _TimeUtilizationCardState extends State<TimeUtilizationCard>
 
               const SizedBox(height: 16),
 
-              // Insight message with overtime info
+              // 提示信息容器
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -292,14 +331,17 @@ class _TimeUtilizationCardState extends State<TimeUtilizationCard>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // 主要提示信息
                           Text(
-                            isOvertime ? _getOvertimeMessage(utilizationRate) : _getEfficiencyMessage(utilizationRate),
+                            // 传入plannedHours参数
+                            isOvertime ? _getOvertimeMessage(utilizationRate) : _getEfficiencyMessage(utilizationRate, plannedHours),
                             style: TextStyle(
                               color: isOvertime ? Colors.orange : _getEfficiencyColor(utilizationRate),
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
+                          // 如果超时,显示具体超时信息
                           if (isOvertime) ...[
                             const SizedBox(height: 4),
                             Text(
@@ -323,25 +365,30 @@ class _TimeUtilizationCardState extends State<TimeUtilizationCard>
     );
   }
 
+  // 构建动画统计数据的辅助方法
   Widget _buildAnimatedStat(
       BuildContext context,
-      String label,
-      double value,
-      Color color,
-      IconData icon,
+      String label,  // 标签文本
+      double value,  // 数值
+      Color color,  // 颜色
+      IconData icon,  // 图标
+      // 动画延迟（毫秒）
       int delay, {
+        // 是否显示为百分比
         bool isPercentage = false,
       }) {
+    // 使用TweenAnimationBuilder创建数值动画
     return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: value),
-      duration: Duration(milliseconds: 1000 + delay),
-      curve: Curves.easeOutCubic,
+      tween: Tween(begin: 0, end: value),  // 从0动画到目标值
+      duration: Duration(milliseconds: 1000 + delay),  // 动画持续时间包含延迟
+      curve: Curves.easeOutCubic,  // 缓出立方曲线,动画开始快后面慢
       builder: (context, animatedValue, child) {
         return Column(
           children: [
             Icon(icon, color: color, size: 32),
             const SizedBox(height: 8),
             Text(
+              // 根据是否为百分比显示不同格式
               isPercentage
                   ? '${animatedValue.toStringAsFixed(1)}%'
                   : '${animatedValue.toStringAsFixed(1)}h',
@@ -362,28 +409,37 @@ class _TimeUtilizationCardState extends State<TimeUtilizationCard>
     );
   }
 
+  // 根据效率获取对应颜色
   Color _getEfficiencyColor(double rate) {
-    if (rate > 100) return Colors.orange.shade600;  // 超时
-    if (rate >= 90) return Colors.green.shade600;
-    if (rate >= 70) return Colors.blue.shade600;
-    if (rate >= 50) return Colors.amber.shade600;
-    return Colors.red.shade600;
+    if (rate > 100) return Colors.orange.shade600;  // 超时：橙色
+    if (rate >= 90) return Colors.green.shade600;  // 90-100%：绿色（优秀）
+    if (rate >= 70) return Colors.blue.shade600;  // 70-89%：蓝色（良好）
+    if (rate >= 50) return Colors.amber.shade600;  // 50-69%：琥珀色（一般）
+    return Colors.red.shade600;  // 低于50%：红色（较差）
   }
 
+  // 根据效率获取对应图标
   IconData _getEfficiencyIcon(double rate) {
-    if (rate >= 90 && rate <= 100) return Icons.sentiment_very_satisfied;
-    if (rate >= 70) return Icons.sentiment_satisfied;
-    if (rate >= 50) return Icons.sentiment_neutral;
-    return Icons.sentiment_dissatisfied;
+    if (rate >= 90 && rate <= 100) return Icons.sentiment_very_satisfied;  // 非常满意
+    if (rate >= 70) return Icons.sentiment_satisfied;  // 满意
+    if (rate >= 50) return Icons.sentiment_neutral;  // 中性
+    return Icons.sentiment_dissatisfied;  // 不满意
   }
 
-  String _getEfficiencyMessage(double rate) {
+  // 根据效率生成提示信息
+  String _getEfficiencyMessage(double rate, double plannedHours) {
+    // 添加特殊情况处理：没有计划任务
+    if (plannedHours == 0) {
+      return 'No tasks were planned for this period.';
+    }
+
     if (rate >= 90 && rate <= 100) return 'Excellent time management! Keep it up!';
     if (rate >= 70) return 'Good utilization. Room for improvement.';
     if (rate >= 50) return 'Consider optimizing your time estimates.';
     return 'Time estimates may need adjustment.';
   }
 
+  // 生成超时提示信息
   String _getOvertimeMessage(double rate) {
     final overtimePercent = rate - 100;
     if (overtimePercent <= 20) return 'Slightly over time. Consider better estimation.';
