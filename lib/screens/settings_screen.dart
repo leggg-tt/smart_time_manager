@@ -10,6 +10,7 @@ import '../widgets/scheduler_preferences_dialog.dart';
 import '../services/test_data_generator.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/theme_selector_dialog.dart';
+import '../widgets/ai_settings_dialog.dart';
 
 // 主组件SettingsScreen
 class SettingsScreen extends StatelessWidget {
@@ -275,25 +276,17 @@ class _GeneralSettings extends StatelessWidget {
                 ),
               ),
               const Divider(height: 1),
-              // 开关类设置(设置工作时间设置,暂时还未实现)
+              // AI 助手设置
               ListTile(
-                leading: const Icon(Icons.access_time),
-                title: const Text('Working Hours'),
-                subtitle: const Text('9:00 AM - 6:00 PM'),
+                leading: const Icon(Icons.auto_awesome),
+                title: const Text('AI Assistant'),
+                subtitle: const Text('Configure AI behavior and preferences'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
-                  // TODO: 实现工作时间设置
-                },
-              ),
-              const Divider(height: 1),
-              // 开关类设置(设置午休时间设置,暂时还未实现)
-              ListTile(
-                leading: const Icon(Icons.restaurant),
-                title: const Text('Lunch Break'),
-                subtitle: const Text('12:00 PM - 1:00 PM'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  // TODO: 实现休息时间设置
+                  showDialog(
+                    context: context,
+                    builder: (context) => const AISettingsDialog(),
+                  );
                 },
               ),
             ],

@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/task.dart';
 import '../models/enums.dart';
+import '../models/ai_preferences.dart';
+import 'ai_preferences_service.dart';
 
 // 定义AITaskParser 类
 class AITaskParser {
@@ -38,6 +40,12 @@ class AITaskParser {
     if (apiKey == null || apiKey.isEmpty) {
       throw Exception('Please set Claude API Key first');
     }
+
+    // 加载用户的 AI 偏好设置
+    final aiPreferences = await AIPreferencesService.loadPreferences();
+
+    // 增加 API 调用计数
+    await AIPreferencesService.incrementApiCallCount();
 
     try {
       // 构建API 请求
@@ -79,17 +87,35 @@ Please return JSON in this format:
   "suggestedTime": "HH:mm (suggested time to schedule)"
 }
 
-Parsing rules:
-1. If duration is not specified, estimate reasonable duration based on task type
-2. If priority is not mentioned, judge based on tone and deadline urgency
-3. Infer appropriate category, energy and focus requirements based on task content
-4. If relative time like "tomorrow", "next week", "this afternoon" is mentioned, convert to specific date
-5. If no specific time is mentioned, recommend suitable time slots based on task type
-6. For meetings/calls, default to medium-high energy and medium focus
-7. For creative work, suggest high energy and deep focus
-8. For routine tasks, suggest low-medium energy and light-medium focus
+Core Parsing Rules:
+1. Always judge priority based on tone and deadline urgency if not explicitly mentioned
+2. Infer appropriate category from task content keywords
+3. Convert all relative time expressions to specific dates
+4. Always suggest a suitable time slot if no specific time is mentioned
+5. Consider task dependencies and logical sequence
+
+${aiPreferences.generateParsingRules()}
+
+Additional Context Rules:
+- For ambiguous durations, prefer shorter times for simple tasks and longer for complex ones
+- If the task involves other people (meetings, calls), default to business hours
+- For tasks requiring deep concentration, prefer morning hours or user's peak time
+- Break down compound requests into the most important single task
+- Recognize common task patterns and apply appropriate defaults
+
+Language-Specific Rules:
+- Chinese: "明天"=tomorrow, "下周"=next week, "下午"=afternoon, "上午"=morning
+- Understand cultural context (e.g., Chinese lunch time is typically 12:00-13:00)
+- Handle both formal and informal expressions
+
+Task Category Detection Keywords:
+- Creative: design, write, create, brainstorm, plan, innovate, draw, paint (画画)
+- Analytical: analyze, review, research, calculate, evaluate, assess
+- Communication: meet, call, email, discuss, present, talk
+- Routine: check, update, organize, file, process, submit
 
 Examples of voice input patterns:
+English:
 - "Schedule a meeting with John tomorrow at 3 PM for 2 hours"
 - "Finish the project report by Friday afternoon, it needs high focus"
 - "Call mom sometime this week"
@@ -97,6 +123,18 @@ Examples of voice input patterns:
 - "Review emails and respond to urgent ones"
 - "Workout at the gym for an hour"
 - "Write blog post about AI trends, should take about 90 minutes"
+
+Chinese:
+- "明天下午3点和John开会，大概2小时"
+- "下周五之前完成项目报告"
+- "明天我要画画"
+- "下周给妈妈打电话"
+- "准备周一早上的演讲"
+
+Error Handling:
+- If unclear, use task type to determine reasonable defaults
+- If date parsing fails, use next available weekday
+- Always provide a valid response even with minimal input
 '''
             }
           ],
