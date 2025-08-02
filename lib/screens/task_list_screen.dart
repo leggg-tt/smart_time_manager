@@ -9,6 +9,8 @@ import '../widgets/voice_input_dialog.dart';
 import '../services/scheduler_service.dart';
 import '../widgets/onboarding_overlay.dart';  // 【新增导入】
 import '../widgets/match_score_indicator.dart';  // 【新增导入】
+import '../widgets/task_templates_sheet.dart';  // 【模板功能：新增导入】
+import '../services/task_template_service.dart';  // 【模板功能：新增导入】
 
 // 定义TaskListScreen有状态组件(表示这个页面有内部状态需要管理)
 class TaskListScreen extends StatefulWidget {
@@ -86,11 +88,23 @@ class _TaskListScreenState extends State<TaskListScreen>
             );
           },
         ),
+        // 【模板功能：修改浮动按钮组】
         // 浮动操作按钮组
         floatingActionButton: Column(
           // 按钮主界面右对齐
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
+            // 【模板功能：新增模板按钮】
+            FloatingActionButton.small(
+              onPressed: () => _showTemplatesSheet(context),
+              heroTag: 'task_list_templates',
+              backgroundColor: Theme.of(context).colorScheme.secondary,
+              foregroundColor: Colors.white,
+              child: const Icon(Icons.bookmark, size: 20),
+              tooltip: 'Task Templates',
+            ),
+            const SizedBox(height: 8),
+            // 语音输入按钮
             FloatingActionButton.small(
               onPressed: () => _showVoiceInputDialog(context),
               // 防止多个 FAB 之间的动画冲突
@@ -114,6 +128,16 @@ class _TaskListScreenState extends State<TaskListScreen>
         ),
       ),
     );  // 【修改结束】- 闭合 OnboardingOverlay
+  }
+
+  // 【模板功能：新增显示模板方法】
+  void _showTemplatesSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const TaskTemplatesSheet(),
+    );
   }
 
   // 构建任务列表方法

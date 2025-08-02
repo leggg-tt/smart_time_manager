@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';  // 【模板功能：新增导入】
 import '../models/task.dart';
 import '../models/enums.dart';
 import '../screens/pomodoro_screen.dart';
+import '../providers/task_provider.dart';  // 【模板功能：新增导入】
 
 // 定义任务操作菜单
 class TaskActionMenu extends StatelessWidget {
@@ -97,6 +99,19 @@ class TaskActionMenu extends StatelessWidget {
               },
             ),
 
+          // 【模板功能：新增保存为模板选项】
+          _buildActionItem(
+            context,
+            icon: Icons.bookmark_add,
+            title: 'Save as Template',
+            subtitle: 'Reuse this task configuration',
+            color: Colors.purple,
+            onTap: () {
+              Navigator.of(context).pop();
+              _saveAsTemplate(context);
+            },
+          ),
+
           // 查看详情功能对所有任务都开放
           if (onViewDetails != null)
             _buildActionItem(
@@ -133,6 +148,17 @@ class TaskActionMenu extends StatelessWidget {
             child: const Text('Cancel'),
           ),
         ],
+      ),
+    );
+  }
+
+  // 【模板功能：保存为模板方法】
+  void _saveAsTemplate(BuildContext context) {
+    context.read<TaskProvider>().saveTaskAsTemplate(task);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Task saved as template'),
+        duration: Duration(seconds: 2),
       ),
     );
   }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';  // 【模板功能：新增导入】
 import '../models/task.dart';
 import '../models/enums.dart';
+import '../providers/task_provider.dart';  // 【模板功能：新增导入】
 
 // 定义TaskListItem类(无状态组件，不需要管理内部状态)
 class TaskListItem extends StatelessWidget {
@@ -30,6 +32,8 @@ class TaskListItem extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
+        // 【模板功能：添加长按菜单】
+        onLongPress: () => _showContextMenu(context),
         child: Padding(
           padding: const EdgeInsets.all(12),  // 内边距12像素
           // 垂直布局
@@ -77,20 +81,51 @@ class TaskListItem extends StatelessWidget {
                     ),
                   ),
 
-                  // 操作按钮
-                  if (onSchedule != null)
-                    // 用在pending列表上
-                    IconButton(
-                      icon: const Icon(Icons.schedule),
-                      onPressed: onSchedule,
-                      tooltip: 'Schedule time',
-                    ),
-                  if (onDelete != null)
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: onDelete,
-                      tooltip: 'Delete',
-                    ),
+                  // 【模板功能：修改操作按钮，添加更多菜单】
+                  // 更多操作按钮（包含保存为模板选项）
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert),
+                    onSelected: (value) => _handleMenuAction(context, value),
+                    itemBuilder: (BuildContext context) => [
+                      // 如果有安排回调，显示安排选项
+                      if (onSchedule != null)
+                        const PopupMenuItem(
+                          value: 'schedule',
+                          child: Row(
+                            children: [
+                              Icon(Icons.schedule),
+                              SizedBox(width: 8),
+                              Text('Schedule'),
+                            ],
+                          ),
+                        ),
+                      // 保存为模板选项
+                      const PopupMenuItem(
+                        value: 'save_template',
+                        child: Row(
+                          children: [
+                            Icon(Icons.bookmark_add),
+                            SizedBox(width: 8),
+                            Text('Save as Template'),
+                          ],
+                        ),
+                      ),
+                      // 如果有删除回调，显示删除选项
+                      if (onDelete != null) ...[
+                        const PopupMenuDivider(),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete_outline, color: Colors.red),
+                              SizedBox(width: 8),
+                              Text('Delete', style: TextStyle(color: Colors.red)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ],
               ),
 
@@ -145,6 +180,80 @@ class TaskListItem extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // 【模板功能：新增长按菜单方法】
+  void _showContextMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (onSchedule != null)
+                ListTile(
+                  leading: const Icon(Icons.schedule),
+                  title: const Text('Schedule'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    onSchedule!();
+                  },
+                ),
+              ListTile(
+                leading: const Icon(Icons.bookmark_add),
+                title: const Text('Save as Template'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _saveAsTemplate(context);
+                },
+              ),
+              if (onDelete != null)
+                ListTile(
+                  leading: const Icon(Icons.delete_outline, color: Colors.red),
+                  title: const Text('Delete', style: TextStyle(color: Colors.red)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    onDelete!();
+                  },
+                ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.close),
+                title: const Text('Cancel'),
+                onTap: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // 【模板功能：处理菜单操作】
+  void _handleMenuAction(BuildContext context, String value) {
+    switch (value) {
+      case 'schedule':
+        if (onSchedule != null) onSchedule!();
+        break;
+      case 'save_template':
+        _saveAsTemplate(context);
+        break;
+      case 'delete':
+        if (onDelete != null) onDelete!();
+        break;
+    }
+  }
+
+  // 【模板功能：保存为模板方法】
+  void _saveAsTemplate(BuildContext context) {
+    context.read<TaskProvider>().saveTaskAsTemplate(task);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Task saved as template'),
+        duration: Duration(seconds: 2),
       ),
     );
   }

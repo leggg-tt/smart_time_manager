@@ -3,6 +3,7 @@ import '../models/task.dart';
 import '../models/enums.dart';
 import '../services/database_service.dart';
 import '../services/scheduler_service.dart';
+import '../services/task_template_service.dart';
 
 //定义TaskProvider类
 class TaskProvider with ChangeNotifier {
@@ -13,12 +14,14 @@ class TaskProvider with ChangeNotifier {
 
   List<Task> _tasks = [];  // 所有任务列表
   List<Task> _todayTasks = [];  // 今日任务列表
+  List<TaskTemplate> _templates = [];  // 任务模板列表
   bool _isLoading = false;  // 加载状态标志
   String? _error;  // 错误信息(可以为空)
 
   // 提供对私有变量的只读访问
   List<Task> get tasks => _tasks;
   List<Task> get todayTasks => _todayTasks;
+  List<TaskTemplate> get templates => _templates;  // 新增：模板访问器
   bool get isLoading => _isLoading;
   String? get error => _error;
 
@@ -72,11 +75,66 @@ class TaskProvider with ChangeNotifier {
       print('====================================\n');
 
       await loadTodayTasks();
+
+      // 新增：同时加载模板
+      await loadTemplates();
     } catch (e) {
       _error = '加载任务失败: $e';
     }
 
     _isLoading = false;
+    notifyListeners();
+  }
+
+  // 新增：加载模板
+  Future<void> loadTemplates() async {
+    try {
+      _templates = await TaskTemplateService.getTemplates();
+      print('加载了 ${_templates.length} 个任务模板');
+      notifyListeners();
+    } catch (e) {
+      print('加载模板失败: $e');
+      // 模板加载失败不影响主功能，所以不设置 _error
+    }
+  }
+
+  // 新增：保存任务为模板
+  Future<void> saveTaskAsTemplate(Task task) async {
+    try {
+      final success = await TaskTemplateService.createTemplateFromTask(task);
+      if (success) {
+        await loadTemplates();
+        _error = null;
+      } else {
+        _error = '保存模板失败';
+      }
+    } catch (e) {
+      _error = '保存模板失败: $e';
+    }
+    notifyListeners();
+  }
+
+  // 新增：从模板创建任务
+  Future<void> createTaskFromTemplate(TaskTemplate template) async {
+    try {
+      final task = template.toTask();
+      await addTask(task);
+      _error = null;
+    } catch (e) {
+      _error = '从模板创建任务失败: $e';
+      notifyListeners();
+    }
+  }
+
+  // 新增：删除模板
+  Future<void> deleteTemplate(String templateId) async {
+    try {
+      await TaskTemplateService.deleteTemplate(templateId);
+      await loadTemplates();
+      _error = null;
+    } catch (e) {
+      _error = '删除模板失败: $e';
+    }
     notifyListeners();
   }
 

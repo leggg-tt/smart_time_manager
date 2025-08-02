@@ -7,6 +7,7 @@ import 'package:smart_time_manager/models/task.dart';
 import 'package:smart_time_manager/models/enums.dart';
 import 'package:smart_time_manager/services/pomodoro_settings_service.dart';
 import 'package:smart_time_manager/services/scheduler_service.dart';
+import 'package:smart_time_manager/services/task_template_service.dart';
 
 // 模拟TaskProvider类
 // 创建一个模拟的TaskProvider类,继承ChangeNotifier并实现TaskProvider接口
@@ -15,6 +16,8 @@ class MockTaskProvider extends ChangeNotifier implements TaskProvider {
   Task? _lastUpdatedTask;
   // 存储所有任务的列表
   final List<Task> _tasks = [];
+  // 存储模板列表
+  final List<TaskTemplate> _templates = [];
 
   // getter方法,用于获取最后更新的任务
   Task? get lastUpdatedTask => _lastUpdatedTask;
@@ -53,6 +56,10 @@ class MockTaskProvider extends ChangeNotifier implements TaskProvider {
   @override
   List<Task> get todayTasks => [];
 
+  // 返回模板列表
+  @override
+  List<TaskTemplate> get templates => _templates;
+
   // 返回加载状态,测试中始终返回false表示不在加载中
   @override
   bool get isLoading => false;
@@ -68,6 +75,32 @@ class MockTaskProvider extends ChangeNotifier implements TaskProvider {
   // 加载今天任务的方法,测试中为空实现
   @override
   Future<void> loadTodayTasks() async {}
+
+  // 加载模板的方法,测试中为空实现
+  @override
+  Future<void> loadTemplates() async {}
+
+  // 保存任务为模板的方法
+  @override
+  Future<void> saveTaskAsTemplate(Task task) async {
+    final template = TaskTemplate.fromTask(task);
+    _templates.add(template);
+    notifyListeners();
+  }
+
+  // 从模板创建任务的方法
+  @override
+  Future<void> createTaskFromTemplate(TaskTemplate template) async {
+    final task = template.toTask();
+    await addTask(task);
+  }
+
+  // 删除模板的方法
+  @override
+  Future<void> deleteTemplate(String templateId) async {
+    _templates.removeWhere((t) => t.id == templateId);
+    notifyListeners();
+  }
 
   // 添加新任务
   @override
