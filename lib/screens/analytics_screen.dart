@@ -8,6 +8,7 @@ import '../widgets/analytics/productivity_heatmap.dart';
 import '../widgets/analytics/daily_trend_chart.dart';
 import '../widgets/analytics/priority_analysis_card.dart';
 import '../widgets/analytics/time_utilization_card.dart';
+import '../widgets/file_export_dialog.dart';  // 【新增导入】
 
 // 定义一个有状态的AnalyticsScreen组件
 class AnalyticsScreen extends StatefulWidget {
@@ -40,6 +41,18 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         // 背景色
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
+          // 【新增开始】- 添加导出按钮
+          IconButton(
+            icon: const Icon(Icons.download),
+            tooltip: 'Export Data',
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => const FileExportDialog(),
+              );
+            },
+          ),
+          // 【新增结束】
           // 在AppBar右侧添加一个弹出菜单按钮
           PopupMenuButton<String>(
             // initialValue:设置初始选中值
@@ -398,7 +411,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       case '90d':
         return 'Last 90 days';
       case 'custom':
-        // 使用DateFormat格式化日期
+      // 使用DateFormat格式化日期
         final format = DateFormat('MMM d');
         return '${format.format(_startDate)} - ${format.format(_endDate)}';
       default:

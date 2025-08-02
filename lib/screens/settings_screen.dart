@@ -11,6 +11,8 @@ import '../services/test_data_generator.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/theme_selector_dialog.dart';
 import '../widgets/ai_settings_dialog.dart';
+import '../widgets/example_tasks_dialog.dart';  // 【新增导入】
+import '../widgets/time_block_preview.dart';  // 【新增导入】
 
 // 主组件SettingsScreen
 class SettingsScreen extends StatelessWidget {
@@ -328,6 +330,44 @@ class _GeneralSettings extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+        // 【新增开始】- 帮助和教程卡片
+        Card(
+          child: Column(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.help_outline),
+                title: const Text('Help & Tutorials'),
+                subtitle: const Text('Learn how to use Smart Time Manager'),
+                trailing: const Icon(Icons.chevron_right),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.lightbulb),
+                title: const Text('Example Tasks'),
+                subtitle: const Text('See how different tasks match time blocks'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const ExampleTasksDialog(),
+                  );
+                },
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.access_time),
+                title: const Text('Understanding Time Blocks'),
+                subtitle: const Text('Learn about energy levels and matching'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  _showTimeBlocksHelp(context);
+                },
+              ),
+            ],
+          ),
+        ),
+        // 【新增结束】
+        const SizedBox(height: 16),
         Card(
           child: Column(
             children: [
@@ -387,6 +427,52 @@ class _GeneralSettings extends StatelessWidget {
       ],
     );
   }
+
+  // 【新增开始】- 显示时间块帮助对话框
+  void _showTimeBlocksHelp(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Container(
+          width: 600,
+          constraints: const BoxConstraints(maxHeight: 600),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              Text(
+                'Understanding Time Blocks',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: Consumer<TimeBlockProvider>(
+                  builder: (context, provider, child) {
+                    return ListView.builder(
+                      itemCount: provider.timeBlocks.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: TimeBlockPreview(
+                            timeBlock: provider.timeBlocks[index],
+                            showExamples: true,
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Close'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  // 【新增结束】
 
   // 测试数据生成界面
   void _showTestDataDialog(BuildContext context) {

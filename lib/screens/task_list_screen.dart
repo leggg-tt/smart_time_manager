@@ -7,6 +7,8 @@ import '../widgets/task_list_item.dart';
 import '../widgets/add_task_dialog.dart';
 import '../widgets/voice_input_dialog.dart';
 import '../services/scheduler_service.dart';
+import '../widgets/onboarding_overlay.dart';  // 【新增导入】
+import '../widgets/match_score_indicator.dart';  // 【新增导入】
 
 // 定义TaskListScreen有状态组件(表示这个页面有内部状态需要管理)
 class TaskListScreen extends StatefulWidget {
@@ -18,7 +20,7 @@ class TaskListScreen extends StatefulWidget {
 }
 
 class _TaskListScreenState extends State<TaskListScreen>
-    // 混入mixin,为动画提供ticker
+// 混入mixin,为动画提供ticker
     with SingleTickerProviderStateMixin {
   // 延迟初始化的标签控制器,管理顶部标签切换
   late TabController _tabController;
@@ -39,75 +41,79 @@ class _TaskListScreenState extends State<TaskListScreen>
 
   @override
   Widget build(BuildContext context) {
-    // 基础页面结构
-    return Scaffold(
-      // 监听TaskProvider的状态变化,自动重建UI
-      body: Consumer<TaskProvider>(
-        builder: (context, taskProvider, child) {
-          // 获取不同状态的任务列表
-          final pendingTasks = taskProvider.pendingTasks;
-          final scheduledTasks = taskProvider.tasks
-              .where((t) => t.status == TaskStatus.scheduled ||
-              t.status == TaskStatus.inProgress)
-              .toList();
-          final completedTasks = taskProvider.completedTasks;
+    // 【修改开始】- 使用 OnboardingOverlay 包裹整个 Scaffold
+    return OnboardingOverlay(
+      screen: 'task_creation',
+      child: Scaffold(
+        // 【修改结束】
+        // 监听TaskProvider的状态变化,自动重建UI
+        body: Consumer<TaskProvider>(
+          builder: (context, taskProvider, child) {
+            // 获取不同状态的任务列表
+            final pendingTasks = taskProvider.pendingTasks;
+            final scheduledTasks = taskProvider.tasks
+                .where((t) => t.status == TaskStatus.scheduled ||
+                t.status == TaskStatus.inProgress)
+                .toList();
+            final completedTasks = taskProvider.completedTasks;
 
-          // 标签栏
-          return Column(
-            // 显示三个标签,每个标签显示对应的任务数量
-            children: [
-              TabBar(
-                controller: _tabController,
-                tabs: [
-                  Tab(text: 'Pending (${pendingTasks.length})'),
-                  Tab(text: 'Scheduled (${scheduledTasks.length})'),
-                  Tab(text: 'Completed (${completedTasks.length})'),
-                ],
-              ),
-              // 占用剩余空间(expanded)
-              Expanded(
-                // 显示与标签对应的内容
-                child: TabBarView(
+            // 标签栏
+            return Column(
+              // 显示三个标签,每个标签显示对应的任务数量
+              children: [
+                TabBar(
                   controller: _tabController,
-                  // 调用_buildTaskList来创建任务列表
-                  children: [
-                    _buildTaskList(pendingTasks, TaskStatus.pending),
-                    _buildTaskList(scheduledTasks, TaskStatus.scheduled),
-                    _buildTaskList(completedTasks, TaskStatus.completed),
+                  tabs: [
+                    Tab(text: 'Pending (${pendingTasks.length})'),
+                    Tab(text: 'Scheduled (${scheduledTasks.length})'),
+                    Tab(text: 'Completed (${completedTasks.length})'),
                   ],
                 ),
-              ),
-            ],
-          );
-        },
+                // 占用剩余空间(expanded)
+                Expanded(
+                  // 显示与标签对应的内容
+                  child: TabBarView(
+                    controller: _tabController,
+                    // 调用_buildTaskList来创建任务列表
+                    children: [
+                      _buildTaskList(pendingTasks, TaskStatus.pending),
+                      _buildTaskList(scheduledTasks, TaskStatus.scheduled),
+                      _buildTaskList(completedTasks, TaskStatus.completed),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+        // 浮动操作按钮组
+        floatingActionButton: Column(
+          // 按钮主界面右对齐
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            FloatingActionButton.small(
+              onPressed: () => _showVoiceInputDialog(context),
+              // 防止多个 FAB 之间的动画冲突
+              heroTag: 'task_list_voice',
+              backgroundColor: Colors.purple,
+              foregroundColor: Colors.white,
+              child: const Icon(Icons.mic, size: 20),
+              // 长按显示提示文字
+              tooltip: 'Voice create task',
+            ),
+            const SizedBox(height: 12),
+            // 添加任务按钮
+            FloatingActionButton(
+              // 点击后显示添加任务对话框
+              onPressed: () => _showAddTaskDialog(context),
+              heroTag: 'task_list_add',
+              child: const Icon(Icons.add),
+              tooltip: 'Add task',
+            ),
+          ],
+        ),
       ),
-      // 浮动操作按钮组
-      floatingActionButton: Column(
-        // 按钮主界面右对齐
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton.small(
-            onPressed: () => _showVoiceInputDialog(context),
-            // 防止多个 FAB 之间的动画冲突
-            heroTag: 'task_list_voice',
-            backgroundColor: Colors.purple,
-            foregroundColor: Colors.white,
-            child: const Icon(Icons.mic, size: 20),
-            // 长按显示提示文字
-            tooltip: 'Voice create task',
-          ),
-          const SizedBox(height: 12),
-          // 添加任务按钮
-          FloatingActionButton(
-            // 点击后显示添加任务对话框
-            onPressed: () => _showAddTaskDialog(context),
-            heroTag: 'task_list_add',
-            child: const Icon(Icons.add),
-            tooltip: 'Add task',
-          ),
-        ],
-      ),
-    );
+    );  // 【修改结束】- 闭合 OnboardingOverlay
   }
 
   // 构建任务列表方法
@@ -760,13 +766,21 @@ class _TimeSlotSelectionDialog extends StatelessWidget {
                       '${slot.endTime.minute.toString().padLeft(2, '0')}',
                 ),
                 subtitle: Column(
-                  // 详细信息显示
+                  // 【修改开始】- 使用 MatchScoreIndicator 替代原有的显示方式
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (slot.timeBlock != null)
-                      Text('Time Block: ${slot.timeBlock!.name}'),
-                    ...slot.reasons.map((reason) => Text('• $reason')),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text('Time Block: ${slot.timeBlock!.name}'),
+                      ),
+                    MatchScoreIndicator(
+                      score: slot.score / 100,  // 转换为 0-1 范围
+                      reasons: slot.reasons,
+                      expanded: true,
+                    ),
                   ],
+                  // 【修改结束】
                 ),
                 onTap: () => onSelect(slot),
               ),

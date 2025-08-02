@@ -6,6 +6,7 @@ import 'calendar_screen.dart';
 import 'task_list_screen.dart';
 import 'analytics_screen.dart';
 import 'settings_screen.dart';
+import '../widgets/example_tasks_dialog.dart';  // 【新增导入】
 
 class HomeScreen extends StatefulWidget {  // 定义HomeScreen类,继承自有状态组件
   const HomeScreen({super.key});
@@ -52,6 +53,22 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text(_titles[_currentIndex]),  // 动态显示当前页面标题
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,  // 背景色
+        // 【新增开始】- 添加 actions
+        actions: [
+          // 只在日历和任务页显示帮助按钮
+          if (_currentIndex == 0 || _currentIndex == 1)
+            IconButton(
+              icon: const Icon(Icons.help_outline),
+              tooltip: 'View Examples',
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => const ExampleTasksDialog(),
+                );
+              },
+            ),
+        ],
+        // 【新增结束】
       ),
       // 主体内容
       body: IndexedStack(  // 保持所以界面的堆栈式布局

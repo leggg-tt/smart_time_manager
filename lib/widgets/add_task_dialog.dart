@@ -68,11 +68,104 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                 // 子组件左对齐
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 添加任务
-                  Text(
-                    'Add New Task',
-                    style: Theme.of(context).textTheme.headlineSmall,
+                  // 【修改开始】- 添加带帮助按钮的标题行
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Add New Task',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.help_outline, size: 20),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Task Attributes Explained'),
+                              content: SingleChildScrollView(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Understanding Task Attributes',
+                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _buildHelpSection(
+                                      context,
+                                      'Priority',
+                                      '• High: Important & urgent tasks\n'
+                                          '• Medium: Regular work tasks\n'
+                                          '• Low: Nice-to-have tasks',
+                                      Icons.flag,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    _buildHelpSection(
+                                      context,
+                                      'Energy Required',
+                                      '• High: Complex thinking, creativity\n'
+                                          '• Medium: Normal work activities\n'
+                                          '• Low: Simple, routine tasks',
+                                      Icons.battery_full,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    _buildHelpSection(
+                                      context,
+                                      'Focus Required',
+                                      '• Deep: Uninterrupted concentration\n'
+                                          '• Medium: Regular attention needed\n'
+                                          '• Light: Can multitask',
+                                      Icons.center_focus_strong,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue.shade50,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Icon(
+                                            Icons.lightbulb,
+                                            size: 20,
+                                            color: Colors.blue.shade700,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              'The app matches these attributes with your time blocks to find the best scheduling times!',
+                                              style: TextStyle(
+                                                color: Colors.blue.shade700,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: const Text('Got it'),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
+                  // 【修改结束】
                   const SizedBox(height: 24),  // 下方间距
 
                   // 任务名称
@@ -403,6 +496,40 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
           ),
         ),
       ),
+    );
+  }
+
+  // 【新增方法】- 构建帮助部分
+  Widget _buildHelpSection(
+      BuildContext context,
+      String title,
+      String content,
+      IconData icon,
+      ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                content,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

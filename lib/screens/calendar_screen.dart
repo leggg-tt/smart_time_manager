@@ -12,6 +12,7 @@ import '../widgets/time_analysis_card.dart';
 import '../widgets/voice_input_dialog.dart';
 import '../widgets/task_action_menu.dart';
 import '../widgets/edit_task_dialog.dart';
+import '../widgets/onboarding_overlay.dart';  // 【新增导入】
 
 // 定义CalendarScreen有状态组件(需要管理选中日期等状态)
 class CalendarScreen extends StatefulWidget {
@@ -59,141 +60,145 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 基础页面结构
-    return Scaffold(
-      // 监听两个Provider(任务和时间块)的变化
-      body: Consumer2<TaskProvider, TimeBlockProvider>(
-        // 当任一数据发生变化时,自动重建界面
-        builder: (context, taskProvider, timeBlockProvider, child) {
-          return Column(
-            children: [
-              // 日历组件
-              TableCalendar<Task>(
-                // 日历可显示的日期范围(前后一年)
-                firstDay: DateTime.now().subtract(const Duration(days: 365)),
-                lastDay: DateTime.now().add(const Duration(days: 365)),
-                // 当前聚焦的日期
-                focusedDay: _focusedDay.value,
-                // 显示格式
-                calendarFormat: _calendarFormat,
-                // 判断某天是否被选中
-                selectedDayPredicate: (day) => isSameDay(_selectedDay.value, day),
-                // 加载每天的事件
-                eventLoader: (day) => _getTasksForDay(day, taskProvider.tasks),
-                // 每周从周一开始
-                startingDayOfWeek: StartingDayOfWeek.monday,
-                calendarStyle: CalendarStyle(
-                  // 不显示当月以外的日期
-                  outsideDaysVisible: false,
-                  // 选中日期的样式
-                  selectedDecoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
-                    shape: BoxShape.circle,
+    // 【修改开始】- 使用 OnboardingOverlay 包裹整个 Scaffold
+    return OnboardingOverlay(
+      screen: 'time_blocks',
+      child: Scaffold(
+        // 【修改结束】
+        // 监听两个Provider(任务和时间块)的变化
+        body: Consumer2<TaskProvider, TimeBlockProvider>(
+          // 当任一数据发生变化时,自动重建界面
+          builder: (context, taskProvider, timeBlockProvider, child) {
+            return Column(
+              children: [
+                // 日历组件
+                TableCalendar<Task>(
+                  // 日历可显示的日期范围(前后一年)
+                  firstDay: DateTime.now().subtract(const Duration(days: 365)),
+                  lastDay: DateTime.now().add(const Duration(days: 365)),
+                  // 当前聚焦的日期
+                  focusedDay: _focusedDay.value,
+                  // 显示格式
+                  calendarFormat: _calendarFormat,
+                  // 判断某天是否被选中
+                  selectedDayPredicate: (day) => isSameDay(_selectedDay.value, day),
+                  // 加载每天的事件
+                  eventLoader: (day) => _getTasksForDay(day, taskProvider.tasks),
+                  // 每周从周一开始
+                  startingDayOfWeek: StartingDayOfWeek.monday,
+                  calendarStyle: CalendarStyle(
+                    // 不显示当月以外的日期
+                    outsideDaysVisible: false,
+                    // 选中日期的样式
+                    selectedDecoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    // 今天的样式
+                    todayDecoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                      shape: BoxShape.circle,
+                    ),
+                    // 事件标记的样式
+                    markerDecoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.secondary,
+                      shape: BoxShape.circle,
+                    ),
                   ),
-                  // 今天的样式
-                  todayDecoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-                    shape: BoxShape.circle,
+                  // 日历头部样式
+                  headerStyle: HeaderStyle(
+                    // 显示格式切换按钮
+                    formatButtonVisible: true,
+                    // 标题居中
+                    titleCentered: true,
+                    // 格式按钮不显示下一个格式
+                    formatButtonShowsNext: false,
+                    // 格式按钮的装饰
+                    formatButtonDecoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),  // 现版本是withValues,后面如果出问题再更改:withValues(alpha: 0.1)
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  // 事件标记的样式
-                  markerDecoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.secondary,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                // 日历头部样式
-                headerStyle: HeaderStyle(
-                  // 显示格式切换按钮
-                  formatButtonVisible: true,
-                  // 标题居中
-                  titleCentered: true,
-                  // 格式按钮不显示下一个格式
-                  formatButtonShowsNext: false,
-                  // 格式按钮的装饰
-                  formatButtonDecoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),  // 现版本是withValues,后面如果出问题再更改:withValues(alpha: 0.1)
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                // 日历事件处理
-                // 用户选择某一天时触发
-                onDaySelected: (selectedDay, focusedDay) {
-                  // 触发时,触发界面重建
-                  setState(() {
-                    _selectedDay.value = selectedDay;
+                  // 日历事件处理
+                  // 用户选择某一天时触发
+                  onDaySelected: (selectedDay, focusedDay) {
+                    // 触发时,触发界面重建
+                    setState(() {
+                      _selectedDay.value = selectedDay;
+                      _focusedDay.value = focusedDay;
+                    });
+                  },
+                  // 切换日历格式时触发
+                  onFormatChanged: (format) {
+                    // 触发时,触发界面重建
+                    setState(() {
+                      _calendarFormat = format;
+                    });
+                  },
+                  // 翻页时触发
+                  onPageChanged: (focusedDay) {
                     _focusedDay.value = focusedDay;
-                  });
-                },
-                // 切换日历格式时触发
-                onFormatChanged: (format) {
-                  // 触发时,触发界面重建
-                  setState(() {
-                    _calendarFormat = format;
-                  });
-                },
-                // 翻页时触发
-                onPageChanged: (focusedDay) {
-                  _focusedDay.value = focusedDay;
-                },
-              ),
-
-              const Divider(height: 1),
-
-              // 时间分析卡片
-              // FutureBuilder-异步构建组件,等待时间分析数据
-              FutureBuilder<Map<String, dynamic>>(
-                future: taskProvider.getTimeAnalysis(_selectedDay.value),
-                builder: (context, snapshot) {
-                  if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                    // 显示时间分析的卡片
-                    return TimeAnalysisCard(analysis: snapshot.data!);
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
-
-              // 当日任务列表
-              // 占用剩余空间
-              Expanded(
-                // 构建当天的时间表
-                child: _buildDaySchedule(
-                  // 传递选中日期,该日任务,时间块信息
-                  context,
-                  _selectedDay.value,
-                  _getTasksForDay(_selectedDay.value, taskProvider.tasks),
-                  timeBlockProvider.getTimeBlocksForDay(_selectedDay.value.weekday),
+                  },
                 ),
-              ),
-            ],
-          );
-        },
+
+                const Divider(height: 1),
+
+                // 时间分析卡片
+                // FutureBuilder-异步构建组件,等待时间分析数据
+                FutureBuilder<Map<String, dynamic>>(
+                  future: taskProvider.getTimeAnalysis(_selectedDay.value),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                      // 显示时间分析的卡片
+                      return TimeAnalysisCard(analysis: snapshot.data!);
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+
+                // 当日任务列表
+                // 占用剩余空间
+                Expanded(
+                  // 构建当天的时间表
+                  child: _buildDaySchedule(
+                    // 传递选中日期,该日任务,时间块信息
+                    context,
+                    _selectedDay.value,
+                    _getTasksForDay(_selectedDay.value, taskProvider.tasks),
+                    timeBlockProvider.getTimeBlocksForDay(_selectedDay.value.weekday),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+        // 浮动操作按钮
+        floatingActionButton: Column(
+          // 子组件右对齐
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            // 语音输入按钮
+            FloatingActionButton(
+              onPressed: () => _showVoiceInputDialog(context),
+              heroTag: 'calendar_voice',
+              backgroundColor: Colors.purple,
+              foregroundColor: Colors.white,
+              child: const Icon(Icons.mic),
+              // 长按时显示提示文本
+              tooltip: 'Voice input',
+            ),
+            const SizedBox(height: 16),
+            // 普通添加按钮
+            FloatingActionButton(
+              onPressed: () => _showAddTaskDialog(context),
+              heroTag: 'calendar_add',
+              child: const Icon(Icons.add),
+              tooltip: 'Add task',
+            ),
+          ],
+        ),
       ),
-      // 浮动操作按钮
-      floatingActionButton: Column(
-        // 子组件右对齐
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          // 语音输入按钮
-          FloatingActionButton(
-            onPressed: () => _showVoiceInputDialog(context),
-            heroTag: 'calendar_voice',
-            backgroundColor: Colors.purple,
-            foregroundColor: Colors.white,
-            child: const Icon(Icons.mic),
-            // 长按时显示提示文本
-            tooltip: 'Voice input',
-          ),
-          const SizedBox(height: 16),
-          // 普通添加按钮
-          FloatingActionButton(
-            onPressed: () => _showAddTaskDialog(context),
-            heroTag: 'calendar_add',
-            child: const Icon(Icons.add),
-            tooltip: 'Add task',
-          ),
-        ],
-      ),
-    );
+    );  // 【修改结束】- 闭合 OnboardingOverlay
   }
 
   // 构建日程表方法
