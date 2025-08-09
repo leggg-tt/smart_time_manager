@@ -120,6 +120,52 @@ class MockTaskProvider extends ChangeNotifier implements TaskProvider {
     notifyListeners();
   }
 
+  // 【批量操作：新增批量删除方法】
+  @override
+  Future<void> batchDeleteTasks(List<String> taskIds) async {
+    // 删除所有ID在taskIds列表中的任务
+    _tasks.removeWhere((task) => taskIds.contains(task.id));
+    // 通知监听器更新
+    notifyListeners();
+  }
+
+  // 【批量操作：新增批量更新方法】
+  @override
+  Future<void> batchUpdateTasks(List<Task> tasks) async {
+    // 更新每个任务
+    for (final task in tasks) {
+      final index = _tasks.indexWhere((t) => t.id == task.id);
+      if (index != -1) {
+        _tasks[index] = task;
+      }
+    }
+    // 通知监听器更新
+    notifyListeners();
+  }
+
+  // 【批量操作：新增批量完成方法】
+  @override
+  Future<void> batchCompleteTasks(List<String> taskIds) async {
+    final now = DateTime.now();
+    final tasksToUpdate = <Task>[];
+
+    // 找到所有需要更新的任务并标记为完成
+    for (final taskId in taskIds) {
+      final index = _tasks.indexWhere((t) => t.id == taskId);
+      if (index != -1) {
+        final task = _tasks[index];
+        final updatedTask = task.copyWith(
+          status: TaskStatus.completed,
+          completedAt: now,
+          actualEndTime: now,
+        );
+        tasksToUpdate.add(updatedTask);
+      }
+    }
+
+    // 批量更新任务
+    await batchUpdateTasks(tasksToUpdate);
+  }
 
   // 切换任务状态的方法,测试中为空实现
   @override

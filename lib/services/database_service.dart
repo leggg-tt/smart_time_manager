@@ -198,6 +198,63 @@ class DatabaseService {
     );
   }
 
+  // 【批量操作：新增批量删除任务方法】
+  Future<void> deleteTasks(List<String> taskIds) async {
+    if (taskIds.isEmpty) return;
+
+    final db = await database;
+    final batch = db.batch();
+
+    // 使用批处理删除多个任务
+    for (final id in taskIds) {
+      batch.delete(
+        'tasks',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    }
+
+    // 提交批处理
+    await batch.commit(noResult: true);
+  }
+
+  // 【批量操作：新增批量更新任务方法】
+  Future<void> updateTasks(List<Task> tasks) async {
+    if (tasks.isEmpty) return;
+
+    final db = await database;
+    final batch = db.batch();
+
+    // 使用批处理更新多个任务
+    for (final task in tasks) {
+      batch.update(
+        'tasks',
+        task.toMap(),
+        where: 'id = ?',
+        whereArgs: [task.id],
+      );
+    }
+
+    // 提交批处理
+    await batch.commit(noResult: true);
+  }
+
+  // 【批量操作：新增批量插入任务方法（可选，用于导入功能）】
+  Future<void> insertTasks(List<Task> tasks) async {
+    if (tasks.isEmpty) return;
+
+    final db = await database;
+    final batch = db.batch();
+
+    // 使用批处理插入多个任务
+    for (final task in tasks) {
+      batch.insert('tasks', task.toMap());
+    }
+
+    // 提交批处理
+    await batch.commit(noResult: true);
+  }
+
   // ========== 时间块相关操作 ==========
 
   // 插入新时间块

@@ -218,6 +218,74 @@ class TaskProvider with ChangeNotifier {
     }
   }
 
+  // 【批量操作：新增批量删除方法】
+  Future<void> batchDeleteTasks(List<String> taskIds) async {
+    try {
+      // 批量删除数据库中的任务
+      await _db.deleteTasks(taskIds);
+
+      // 从本地列表中移除
+      _tasks.removeWhere((task) => taskIds.contains(task.id));
+      _todayTasks.removeWhere((task) => taskIds.contains(task.id));
+
+      notifyListeners();
+    } catch (e) {
+      _error = '批量删除任务失败: $e';
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  // 【批量操作：新增批量更新方法】
+  Future<void> batchUpdateTasks(List<Task> tasks) async {
+    try {
+      // 批量更新数据库
+      await _db.updateTasks(tasks);
+
+      // 更新本地列表
+      for (final task in tasks) {
+        final index = _tasks.indexWhere((t) => t.id == task.id);
+        if (index != -1) {
+          _tasks[index] = task;
+        }
+      }
+
+      // 重新加载今日任务
+      await loadTodayTasks();
+      notifyListeners();
+    } catch (e) {
+      _error = '批量更新任务失败: $e';
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  // 【批量操作：新增批量标记完成方法】
+  Future<void> batchCompleteTasks(List<String> taskIds) async {
+    try {
+      // 构建需要更新的任务列表
+      final tasksToUpdate = <Task>[];
+      final now = DateTime.now();
+
+      for (final taskId in taskIds) {
+        final task = _tasks.firstWhere((t) => t.id == taskId);
+        final updatedTask = task.copyWith(
+          status: TaskStatus.completed,
+          completedAt: now,
+          actualEndTime: now,
+        );
+        tasksToUpdate.add(updatedTask);
+      }
+
+      // 批量更新
+      await batchUpdateTasks(tasksToUpdate);
+    } catch (e) {
+      _error = '批量标记完成失败: $e';
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   // 标记任务完成(使用copyWith方法)
   Future<void> completeTask(String taskId) async {
     final task = _tasks.firstWhere((t) => t.id == taskId);

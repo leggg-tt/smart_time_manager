@@ -7,10 +7,11 @@ import '../widgets/task_list_item.dart';
 import '../widgets/add_task_dialog.dart';
 import '../widgets/voice_input_dialog.dart';
 import '../services/scheduler_service.dart';
-import '../widgets/onboarding_overlay.dart';  // 【新增导入】
-import '../widgets/match_score_indicator.dart';  // 【新增导入】
-import '../widgets/task_templates_sheet.dart';  // 【模板功能：新增导入】
-import '../services/task_template_service.dart';  // 【模板功能：新增导入】
+import '../widgets/onboarding_overlay.dart';
+import '../widgets/match_score_indicator.dart';
+import '../widgets/task_templates_sheet.dart';
+import '../services/task_template_service.dart';
+import '../widgets/task_search_bar.dart';  // 【搜索功能：新增导入】
 
 // 定义TaskListScreen有状态组件(表示这个页面有内部状态需要管理)
 class TaskListScreen extends StatefulWidget {
@@ -27,6 +28,13 @@ class _TaskListScreenState extends State<TaskListScreen>
   // 延迟初始化的标签控制器,管理顶部标签切换
   late TabController _tabController;
 
+  // 【批量操作：新增状态变量】
+  bool _isSelectionMode = false;  // 是否处于选择模式
+  final Set<String> _selectedTaskIds = {};  // 存储选中的任务ID
+
+  // 【搜索功能：新增状态变量】
+  String _searchQuery = '';  // 搜索关键词
+
   @override
   void initState() {
     super.initState();
@@ -41,35 +49,227 @@ class _TaskListScreenState extends State<TaskListScreen>
     super.dispose();
   }
 
+  // 【搜索功能：新增方法 - 过滤任务】
+  List<Task> _filterTasks(List<Task> tasks) {
+    if (_searchQuery.isEmpty) {
+      return tasks;
+    }
+
+    final query = _searchQuery.toLowerCase();
+    return tasks.where((task) {
+      return task.title.toLowerCase().contains(query) ||
+          (task.description?.toLowerCase().contains(query) ?? false);
+    }).toList();
+  }
+
+  // 【批量操作：新增方法 - 切换选择模式】
+  void _toggleSelectionMode() {
+    setState(() {
+      _isSelectionMode = !_isSelectionMode;
+      if (!_isSelectionMode) {
+        _selectedTaskIds.clear();
+      }
+    });
+  }
+
+  // 【批量操作：新增方法 - 选择/取消选择任务】
+  void _toggleTaskSelection(String taskId) {
+    setState(() {
+      if (_selectedTaskIds.contains(taskId)) {
+        _selectedTaskIds.remove(taskId);
+      } else {
+        _selectedTaskIds.add(taskId);
+      }
+    });
+  }
+
+  // 【批量操作：新增方法 - 全选/取消全选】
+  void _toggleSelectAll(List<Task> tasks) {
+    setState(() {
+      if (_selectedTaskIds.length == tasks.length) {
+        _selectedTaskIds.clear();
+      } else {
+        _selectedTaskIds.clear();
+        _selectedTaskIds.addAll(tasks.map((t) => t.id));
+      }
+    });
+  }
+
+  // 【批量操作：新增方法 - 批量删除】
+  Future<void> _batchDelete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Tasks'),
+        content: Text('Delete ${_selectedTaskIds.length} selected tasks?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete'),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      final provider = context.read<TaskProvider>();
+
+      // 显示进度指示器
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      // 使用批量删除方法
+      await provider.batchDeleteTasks(_selectedTaskIds.toList());
+
+      // 关闭进度指示器
+      if (mounted) {
+        Navigator.of(context).pop();
+
+        // 显示成功消息
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${_selectedTaskIds.length} tasks deleted'),
+          ),
+        );
+
+        // 退出选择模式
+        _toggleSelectionMode();
+      }
+    }
+  }
+
+  // 【批量操作：新增方法 - 批量标记完成】
+  Future<void> _batchComplete() async {
+    final provider = context.read<TaskProvider>();
+
+    // 显示进度指示器
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    // 使用批量完成方法
+    await provider.batchCompleteTasks(_selectedTaskIds.toList());
+
+    // 关闭进度指示器
+    if (mounted) {
+      Navigator.of(context).pop();
+
+      // 显示成功消息
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${_selectedTaskIds.length} tasks marked as completed'),
+        ),
+      );
+
+      // 退出选择模式
+      _toggleSelectionMode();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // 【修改开始】- 使用 OnboardingOverlay 包裹整个 Scaffold
     return OnboardingOverlay(
       screen: 'task_creation',
       child: Scaffold(
-        // 【修改结束】
+        // 【批量操作：修改 AppBar】
+        appBar: _isSelectionMode
+            ? AppBar(
+          // 选择模式下的 AppBar
+          leading: IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: _toggleSelectionMode,
+          ),
+          title: Text('${_selectedTaskIds.length} selected'),
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          actions: [
+            if (_selectedTaskIds.isNotEmpty) ...[
+              IconButton(
+                icon: const Icon(Icons.check_circle),
+                tooltip: 'Mark as completed',
+                onPressed: _batchComplete,
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete),
+                tooltip: 'Delete selected',
+                onPressed: _batchDelete,
+              ),
+            ],
+          ],
+        )
+            : null,  // 正常模式下不显示 AppBar
         // 监听TaskProvider的状态变化,自动重建UI
         body: Consumer<TaskProvider>(
           builder: (context, taskProvider, child) {
             // 获取不同状态的任务列表
-            final pendingTasks = taskProvider.pendingTasks;
-            final scheduledTasks = taskProvider.tasks
+            final allPendingTasks = taskProvider.pendingTasks;
+            final allScheduledTasks = taskProvider.tasks
                 .where((t) => t.status == TaskStatus.scheduled ||
                 t.status == TaskStatus.inProgress)
                 .toList();
-            final completedTasks = taskProvider.completedTasks;
+            final allCompletedTasks = taskProvider.completedTasks;
+
+            // 【搜索功能：过滤任务】
+            final pendingTasks = _filterTasks(allPendingTasks);
+            final scheduledTasks = _filterTasks(allScheduledTasks);
+            final completedTasks = _filterTasks(allCompletedTasks);
 
             // 标签栏
             return Column(
               // 显示三个标签,每个标签显示对应的任务数量
               children: [
-                TabBar(
-                  controller: _tabController,
-                  tabs: [
-                    Tab(text: 'Pending (${pendingTasks.length})'),
-                    Tab(text: 'Scheduled (${scheduledTasks.length})'),
-                    Tab(text: 'Completed (${completedTasks.length})'),
-                  ],
+                // 【批量操作：修改标签栏，添加操作按钮】
+                Container(
+                  color: Theme.of(context).colorScheme.surface,
+                  child: Column(
+                    children: [
+                      TabBar(
+                        controller: _tabController,
+                        tabs: [
+                          Tab(text: 'Pending (${pendingTasks.length})'),
+                          Tab(text: 'Scheduled (${scheduledTasks.length})'),
+                          Tab(text: 'Completed (${completedTasks.length})'),
+                        ],
+                      ),
+                      // 【搜索功能：添加搜索框】
+                      if (!_isSelectionMode)
+                        TaskSearchBar(
+                          onSearchChanged: (query) {
+                            setState(() {
+                              _searchQuery = query;
+                            });
+                          },
+                        ),
+                      // 正常模式下显示批量操作入口
+                      if (!_isSelectionMode)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton.icon(
+                                onPressed: _toggleSelectionMode,
+                                icon: const Icon(Icons.checklist, size: 18),
+                                label: const Text('Select'),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
                 // 占用剩余空间(expanded)
                 Expanded(
@@ -88,13 +288,14 @@ class _TaskListScreenState extends State<TaskListScreen>
             );
           },
         ),
-        // 【模板功能：修改浮动按钮组】
-        // 浮动操作按钮组
-        floatingActionButton: Column(
+        // 【批量操作：修改浮动按钮，选择模式下隐藏】
+        floatingActionButton: _isSelectionMode
+            ? null  // 选择模式下不显示浮动按钮
+            : Column(
           // 按钮主界面右对齐
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            // 【模板功能：新增模板按钮】
+            // 模板按钮
             FloatingActionButton.small(
               onPressed: () => _showTemplatesSheet(context),
               heroTag: 'task_list_templates',
@@ -127,10 +328,10 @@ class _TaskListScreenState extends State<TaskListScreen>
           ],
         ),
       ),
-    );  // 【修改结束】- 闭合 OnboardingOverlay
+    );
   }
 
-  // 【模板功能：新增显示模板方法】
+  // 显示模板方法
   void _showTemplatesSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -140,11 +341,12 @@ class _TaskListScreenState extends State<TaskListScreen>
     );
   }
 
-  // 构建任务列表方法
+  // 【批量操作：修改构建任务列表方法】
   Widget _buildTaskList(List<Task> tasks, TaskStatus status) {
     // 如果任务列表为空,显示空状态提示
     if (tasks.isEmpty) {
-      return _buildEmptyState(status);
+      // 【搜索功能：修改空状态提示】
+      return _buildEmptyState(status, isSearching: _searchQuery.isNotEmpty);
     }
 
     // 按优先级分组,使用where过滤不同优先级的任务
@@ -159,41 +361,61 @@ class _TaskListScreenState extends State<TaskListScreen>
         .toList();
 
     // 可滚动列表
-    return ListView(
-      padding: const EdgeInsets.all(16),
+    return Column(
       children: [
-        // 只有当该优先级有任务时才显示对应部分
-        if (highPriorityTasks.isNotEmpty) ...[
-          _buildPrioritySection(
-            context,
-            'High Priority',
-            highPriorityTasks,
-            Colors.red,
+        // 【批量操作：新增全选栏】
+        if (_isSelectionMode && tasks.isNotEmpty)
+          Container(
+            color: Theme.of(context).colorScheme.primaryContainer,
+            child: ListTile(
+              leading: Checkbox(
+                value: tasks.every((t) => _selectedTaskIds.contains(t.id)),
+                tristate: true,
+                onChanged: (_) => _toggleSelectAll(tasks),
+              ),
+              title: const Text('Select all'),
+              trailing: Text('${tasks.length} items'),
+            ),
           ),
-          const SizedBox(height: 16),
-        ],
-        if (mediumPriorityTasks.isNotEmpty) ...[
-          _buildPrioritySection(
-            context,
-            'Medium Priority',
-            mediumPriorityTasks,
-            Colors.orange,
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              // 只有当该优先级有任务时才显示对应部分
+              if (highPriorityTasks.isNotEmpty) ...[
+                _buildPrioritySection(
+                  context,
+                  'High Priority',
+                  highPriorityTasks,
+                  Colors.red,
+                ),
+                const SizedBox(height: 16),
+              ],
+              if (mediumPriorityTasks.isNotEmpty) ...[
+                _buildPrioritySection(
+                  context,
+                  'Medium Priority',
+                  mediumPriorityTasks,
+                  Colors.orange,
+                ),
+                const SizedBox(height: 16),
+              ],
+              if (lowPriorityTasks.isNotEmpty) ...[
+                _buildPrioritySection(
+                  context,
+                  'Low Priority',
+                  lowPriorityTasks,
+                  Colors.blue,
+                ),
+              ],
+            ],
           ),
-          const SizedBox(height: 16),
-        ],
-        if (lowPriorityTasks.isNotEmpty) ...[
-          _buildPrioritySection(
-            context,
-            'Low Priority',
-            lowPriorityTasks,
-            Colors.blue,
-          ),
-        ],
+        ),
       ],
     );
   }
 
-  // 优先级分组小组件头部
+  // 【批量操作：修改优先级分组方法】
   Widget _buildPrioritySection(
       BuildContext context,
       String title,
@@ -227,7 +449,7 @@ class _TaskListScreenState extends State<TaskListScreen>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),  // 现版本是withValues,后面如果出问题再更改:withValues(alpha: 0.1)
+                color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -241,52 +463,137 @@ class _TaskListScreenState extends State<TaskListScreen>
           ],
         ),
         const SizedBox(height: 8),
-        // map将每个任务转换为TaskListItem组件
-        ...tasks.map((task) => Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: TaskListItem(
-            task: task,
-            // 点击回调函数
-            onTap: () => _handleTaskTap(context, task),
-            // 删除回调函数
-            onDelete: () => _deleteTask(context, task),
-            // 安排回调函数(只有待处理任务才显示)
-            onSchedule: task.status == TaskStatus.pending
-                ? () => _scheduleTask(context, task)
-                : null,
-          ),
-        )),
+        // 【批量操作：修改任务列表项渲染】
+        ...tasks.map((task) {
+          final isSelected = _selectedTaskIds.contains(task.id);
+
+          // 选择模式下的任务项
+          if (_isSelectionMode) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Card(
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : null,
+                child: ListTile(
+                  leading: Checkbox(
+                    value: isSelected,
+                    onChanged: (_) => _toggleTaskSelection(task.id),
+                  ),
+                  title: Text(
+                    task.title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      decoration: task.status == TaskStatus.completed
+                          ? TextDecoration.lineThrough
+                          : null,
+                    ),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (task.description != null)
+                        Text(
+                          task.description!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.access_time,
+                            size: 14,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${task.durationMinutes} min',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: color.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              task.priority.displayName,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: color,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  onTap: () => _toggleTaskSelection(task.id),
+                ),
+              ),
+            );
+          }
+
+          // 正常模式下的任务列表项（保持原样）
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: TaskListItem(
+              task: task,
+              // 点击回调函数
+              onTap: () => _handleTaskTap(context, task),
+              // 删除回调函数
+              onDelete: () => _deleteTask(context, task),
+              // 安排回调函数(只有待处理任务才显示)
+              onSchedule: task.status == TaskStatus.pending
+                  ? () => _scheduleTask(context, task)
+                  : null,
+            ),
+          );
+        }),
       ],
     );
   }
 
-  // 空状态提示
-  Widget _buildEmptyState(TaskStatus status) {
+  // 【搜索功能：修改空状态提示】
+  Widget _buildEmptyState(TaskStatus status, {bool isSearching = false}) {
     IconData icon;
     String title;
     String subtitle;
 
-    // 根据不同的任务状态显示不同的提示信息
-    switch (status) {
-      case TaskStatus.pending:
-        icon = Icons.inbox;
-        title = 'No pending tasks';
-        subtitle = 'Tap the + button to create a new task';
-        break;
-      case TaskStatus.scheduled:
-        icon = Icons.event_note;
-        title = 'No scheduled tasks';
-        subtitle = 'Schedule tasks from the pending list';
-        break;
-      case TaskStatus.completed:
-        icon = Icons.check_circle_outline;
-        title = 'No completed tasks yet';
-        subtitle = 'Completed tasks will appear here';
-        break;
-      default:
-        icon = Icons.list;
-        title = 'No tasks';
-        subtitle = '';
+    // 如果是搜索状态
+    if (isSearching) {
+      icon = Icons.search_off;
+      title = 'No tasks found';
+      subtitle = 'Try different search keywords';
+    } else {
+      // 根据不同的任务状态显示不同的提示信息
+      switch (status) {
+        case TaskStatus.pending:
+          icon = Icons.inbox;
+          title = 'No pending tasks';
+          subtitle = 'Tap the + button to create a new task';
+          break;
+        case TaskStatus.scheduled:
+          icon = Icons.event_note;
+          title = 'No scheduled tasks';
+          subtitle = 'Schedule tasks from the pending list';
+          break;
+        case TaskStatus.completed:
+          icon = Icons.check_circle_outline;
+          title = 'No completed tasks yet';
+          subtitle = 'Completed tasks will appear here';
+          break;
+        default:
+          icon = Icons.list;
+          title = 'No tasks';
+          subtitle = '';
+      }
     }
 
     // 居中布局
@@ -298,13 +605,13 @@ class _TaskListScreenState extends State<TaskListScreen>
           Icon(
             icon,
             size: 64,
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),  // 现版本是withValues,后面如果出问题再更改:withValues(alpha: 0.3)
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
           ),
           const SizedBox(height: 16),
           Text(
             title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),  // 现版本是withValues,后面如果出问题再更改:withValues(alpha: 0.6)
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             ),
           ),
           // 只有当副标题不为空时才显示
@@ -313,7 +620,7 @@ class _TaskListScreenState extends State<TaskListScreen>
             Text(
               subtitle,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),  // 现版本是withValues,后面如果出问题再更改:withValues(alpha: 0.4)
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
               ),
             ),
           ],
@@ -393,6 +700,7 @@ class _TaskListScreenState extends State<TaskListScreen>
   }
 }
 
+// 以下代码保持不变（任务安排对话框和时间段选择对话框）
 // 任务安排对话框
 class _ScheduleTaskDialog extends StatefulWidget {
   // 接收要安排的任务作为参数
@@ -790,7 +1098,7 @@ class _TimeSlotSelectionDialog extends StatelessWidget {
                       '${slot.endTime.minute.toString().padLeft(2, '0')}',
                 ),
                 subtitle: Column(
-                  // 【修改开始】- 使用 MatchScoreIndicator 替代原有的显示方式
+                  // 使用 MatchScoreIndicator 替代原有的显示方式
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (slot.timeBlock != null)
@@ -804,7 +1112,6 @@ class _TimeSlotSelectionDialog extends StatelessWidget {
                       expanded: true,
                     ),
                   ],
-                  // 【修改结束】
                 ),
                 onTap: () => onSelect(slot),
               ),
